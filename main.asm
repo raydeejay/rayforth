@@ -224,9 +224,21 @@ cr:
         call emit
         ret
 
+.entry cfetch,2,"C@",cr_entry,0
+        DPOP eax
+        mov ebx, [eax]
+        DPUSH bl
+        ret
+
+.entry cstore,2,"C!",cfetch_entry,0
+        DPOP eax
+        DPOP ebx
+        mov [eax], bl
+        ret
+
 here_entry:
         db 4, "HERE"
-        dd cr_entry
+        dd cstore_entry
         db 0
 here_data:
         dd 0
@@ -383,6 +395,38 @@ testword:
 
         call here
         call store              ; and restore the value of here
+        call cr
+
+        ; test dictionary structure
+        DPUSH here_entry
+        call fetch              ; should be C@....
+        DPUSH '0'
+        call plus
+        call emit
+
+        DPUSH ' '
+        call emit
+
+        DPUSH here_entry
+        DPUSH 1
+        call plus
+        DPUSH 4
+        call type
+
+        ; test C@, emit F from Forth
+        DPUSH helloStr
+        DPUSH 3
+        call plus
+        call cfetch
+        call emit
+
+        ; test C!, emit X and modifies PAD too
+        DPUSH 88
+        DPUSH PAD
+        call cstore
+        DPUSH PAD
+        call cfetch
+        call emit
 
         ; end of tests
         call cr
