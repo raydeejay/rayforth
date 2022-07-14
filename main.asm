@@ -420,6 +420,30 @@ testword:
         call plus
         DPUSH 4
         call type
+        call cr
+
+        ; more test for dictionary structure
+        ; print the name of the word preceeding HERE
+        DPUSH here_entry
+        call dup
+        call cfetch
+        DPUSH 1
+        call plus
+        call plus               ; address of the link
+        call fetch              ; address of the linked entry
+
+        call dup
+        call cfetch             ; get the count and move it out of the way
+        call swap
+
+        DPUSH 1                 ; increment the address
+        call plus
+
+        call swap
+
+        call type               ; print the name
+        call cr
+
 
         ; test C@, emit F from Forth
         DPUSH helloStr
