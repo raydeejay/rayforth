@@ -115,6 +115,14 @@ zeroEqual:
         DPUSH ebx
         ret
 
+;; +
+plus:
+        DPOP eax
+        DPOP ebx
+        add eax, ebx
+        DPUSH eax
+        ret
+
 
 ;; --- more code ---
 ;; TYPE
@@ -192,4 +200,10 @@ testword:
         DPUSH eax
         call emit
 
+        DPUSH 60
+        DPUSH 5
+        call plus
+        call emit
+
+        call cr
         ret
