@@ -103,6 +103,19 @@ rpFetch:
         DPUSH eax
         ret
 
+;; 0=
+zeroEqual:
+        DPOP eax
+        test eax, eax
+        lahf
+        shr eax, 6+8
+        and eax, 1
+        mov ebx, 0
+        sub ebx, eax
+        DPUSH ebx
+        ret
+
+
 ;; --- more code ---
 ;; TYPE
 asmtype:
@@ -164,5 +177,19 @@ testword:
         call fetch
         DPUSH PAD
         call store
+
+        DPUSH 0
+        call zeroEqual
+        DPOP eax
+        add eax, '1'
+        DPUSH eax
+        call emit
+
+        DPUSH 1
+        call zeroEqual
+        DPOP eax
+        add eax, '1'
+        DPUSH eax
+        call emit
 
         ret
