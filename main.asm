@@ -1,11 +1,13 @@
 ;; this is a forth written in assembly... or at least it tries to be
 
+bits 64
+
 ;; Constants
-        CELLSIZE equ 4
+        CELLSIZE equ 8
 
 ;; static data stuff
 SECTION .data
-align 4
+align 8
         helloStr db "RayForth v0", 10
         helloLen equ $ -helloStr
 
@@ -18,7 +20,7 @@ align 4
 
 ;; here's where these things go, apparently
 SECTION .bss
-align 4
+align 8
 
 ;; Parameter stack
         DATASTACK resb CELLSIZE*64
@@ -26,13 +28,13 @@ align 4
 
 ;; Parameter Stack Macros
 %macro DPUSH 1
-        sub ebp, CELLSIZE
-        mov [ebp], dword %1
+        sub rbp, CELLSIZE
+        mov qword [rbp], qword %1
 %endmacro
 
 %macro DPOP 1
-        mov %1, [ebp]
-        add ebp, CELLSIZE
+        mov %1, [rbp]
+        add rbp, CELLSIZE
 %endmacro
 
 
@@ -43,241 +45,199 @@ CURRENTWORD:
         resb 128
 
 ;; dictionary here?
-;; colon definition   6 SQUARE link flags?    call DUP   call *   RET
-;;  code definition   3 DUP  link flags?   mov ebp, eax   DPUSH eax  RET
+;; colon and code definitions have the same structure
+;; LINK   FLAGS|COUNT   NAME   code here...
 
-%macro .entry 5
-%1_entry:
-        db %2, %3
-        dd %4
-        db %5
-%1:
+;; inspired by Itsy Forth
+%define link 0
+%define IMMEDIATE 0x80
+
+%macro head 3
+%{2}_entry:
+        %%link dq link
+%define link %%link
+%strlen %%count %1
+        db %3 + %%count,%1
 %endmacro
+
+%macro .colon 2-3 0
+        head %1,%2,%3
+%{2}:
+%endmacro
+
+%macro .constant 3
+        head %1,%2,0
+        val_ %+ %2 dq %3
+%{2}:
+        mov rax, val_ %+ %2
+        DPUSH [rax]
+        ret
+%endmacro
+
+%macro .variable 3
+        head %1,%2,0
+        val_ %+ %2 dq %3
+%{2}:
+        DPUSH val_ %+ %2
+        ret
+%endmacro
+
 
 SECTION mysection,EWR
 DICTIONARY:
 ;; primitives
-;; @ (FETCH)
-.entry fetch,1,"@",0,0
-        DPOP eax
-        mov ebx, [eax]
-        DPUSH ebx
+.colon "@",fetch
+        DPOP rax
+        mov qword rbx, qword [rax]
+        DPUSH rbx
         ret
 
-;; ! (STORE)
-.entry store,1,"!",fetch_entry,0
-        DPOP eax
-        DPOP ebx
-        mov [eax], ebx
+.colon "!",store
+        DPOP rax
+        DPOP rbx
+        mov qword [rax], qword rbx
         ret
 
-;; SP@
-spFetch_entry:
-        db 3, "SP@"
-        dd store_entry
-        db 0
-spFetch:
-        mov eax, ebp
-        DPUSH eax
+.colon "SP@", spFetch
+        mov rax, rbp
+        DPUSH rax
         ret
 
-;; RP@
-rpFetch_entry:
-        db 3, "RP@"
-        dd spFetch_entry
-        db 0
-rpFetch:
-        mov eax, esp
-        DPUSH eax
+.colon "RP@", rpFetch
+        mov rax, rsp
+        DPUSH rax
         ret
 
-;; 0=
-zeroEqual_entry:
-        db 2, "0="
-        dd rpFetch_entry
-        db 0
-zeroEqual:
-        DPOP eax
-        test eax, eax
-        lahf
-        shr eax, 6+8
-        and eax, 1
-        mov ebx, 0
-        sub ebx, eax
-        DPUSH ebx
+.colon "0=", zeroEqual
+        DPOP rax
+        test rax, rax
+        pushf
+        pop rax
+        shr rax, 6+8
+        and rax, 1
+        mov rbx, 0
+        sub rbx, rax
+        DPUSH rbx
         ret
 
-;; +
-plus_entry:
-        db 1, "+"
-        dd zeroEqual_entry
-        db 0
-plus:
-        DPOP eax
-        DPOP ebx
-        add eax, ebx
-        DPUSH eax
+.colon "+", plus
+        DPOP rax
+        DPOP rbx
+        add rax, rbx
+        DPUSH rax
         ret
 
-;; NAND
-nand_entry:
-        db 4, "NAND"
-        dd plus_entry
-        db 0
-nand:
-        DPOP eax
-        DPOP ebx
-        and eax, ebx
-        not eax
-        DPUSH eax
+.colon "NAND", nand
+        DPOP rax
+        DPOP rbx
+        and rax, rbx
+        not rax
+        DPUSH rax
         ret
 
-;; EXIT
-exit_entry:
-        db 4, "EXIT"
-        dd nand_entry
-        db 0
-exit:
-        pop eax
-        pop ebx
-        push eax
+.colon "EXIT", exit
+        pop rax
+        pop rbx
+        push rax
         ret
 
-;; KEY
 ;; ideally we should set the terminal to raw or something first
-key_entry:
-        db 3, "KEY"
-        dd exit_entry
-        db 0
-key:
-        sub ebp, 4
-        mov eax, 3
-        mov ebx, 1
-        mov ecx, ebp
-        mov edx, 1
+.colon "KEY", key
+        sub rbp, 4
+        mov rax, 3
+        mov rbx, 1
+        mov rcx, rbp
+        mov rdx, 1
         int 0x80
         ret
 
-;; EMIT
-emit_entry:
-        db 4, "EMIT"
-        dd key_entry
-        db 0
-emit:
-        mov eax, ebp
-        DPUSH eax
+.colon "EMIT", emit
+        mov rax, rbp
+        DPUSH rax
         DPUSH 1
         call type
-        add ebp, CELLSIZE
+        add rbp, CELLSIZE
         ret
 
 ;; end of SectorForth primitives, start of mine
 
 ;; TYPE
-type_entry:
-        db 4, "TYPE"
-        dd emit_entry
-        db 0
-type:
-        mov eax, 4
-        mov ebx, 1
-        DPOP edx
-        DPOP ecx
+.colon "TYPE", type
+        mov rax, 4
+        mov rbx, 1
+        DPOP rdx
+        DPOP rcx
         int 0x80
         ret
 
-square_entry:
-        db 6, "SQUARE"
-        dd type_entry
-        db 0
-square:
+.colon "SQUARE", square
         call dup
         call multiply
         ret
 
-dup_entry:
-        db 3, "DUP"
-        dd square_entry
-        db 0
-dup:
-        mov eax, [ebp]
-        DPUSH eax
+.colon "DUP", dup
+        mov rax, [rbp]
+        DPUSH rax
         ret
 
-.entry swap,4,"SWAP",dup_entry,0
-        DPOP eax
-        DPOP ebx
-        DPUSH eax
-        DPUSH ebx
+.colon "SWAP", swap
+        DPOP rax
+        DPOP rbx
+        DPUSH rax
+        DPUSH rbx
         ret
 
-multiply_entry:
-        db 1, "*"
-        dd swap_entry
-        db 0
-multiply:
-        DPOP eax
-        DPOP ebx
-        mul ebx
-        DPUSH eax
+.colon "*", multiply
+        DPOP rax
+        DPOP rbx
+        mul rbx
+        DPUSH rax
         ret
 
-cr_entry:
-        db 2, "CR"
-        dd multiply_entry
-        db 0
-cr:
+.colon "CR", cr
         DPUSH 10
         call emit
         ret
 
-.entry cfetch,2,"C@",cr_entry,0
-        DPOP eax
-        xor ebx, ebx
-        mov bl, [eax]
-        DPUSH ebx
+.colon "C@", cfetch
+        DPOP rax
+        xor rbx, rbx
+        mov bl, [rax]
+        DPUSH rbx
         ret
 
-.entry cstore,2,"C!",cfetch_entry,0
-        DPOP eax
-        DPOP ebx
-        mov [eax], bl
+.colon "C!", cstore
+        DPOP rax
+        DPOP rbx
+        mov [rax], bl
         ret
 
-here_entry:
-        db 4, "HERE"
-        dd cstore_entry
-        db 0
-here_data:
-        dd 0
-here:
-        DPUSH here_data
-        ret
+.variable "HERE", here, 77
 
 ;; the program code here
 SECTION .text
-align 4
+align 8
 
 global _start
 
 ;; perform various initialization stuff
 init:
-        mov edi, PAD
-        mov ecx, 128
+        mov rdi, PAD
+        mov rcx, 128
         mov al, 65
         rep stosb
 
-        mov edi, CURRENTWORD
-        mov ecx, 32
+        mov rdi, CURRENTWORD
+        mov rcx, 32
         mov al, 32
         rep stosb
 
-        mov edi, DATASTACK
-        mov ecx, CELLSIZE*64
+        mov rdi, DATASTACK
+        mov rcx, CELLSIZE*64
         mov al, 0
         rep stosb
 
-        mov ebp, DATASTACKBOTTOM
+        mov rbp, DATASTACKBOTTOM
         ret
 
 
@@ -311,8 +271,8 @@ _start:
 
 ;;;; THIS IS THE EXIT POINT
 coda:
-        mov eax, 1
-        mov ebx, 0
+        mov rax, 1
+        mov rbx, 0
         int 0x80
 
 testexitinner:
@@ -347,16 +307,16 @@ testword:
         ; test 0=, emit 0 and 1
         DPUSH 0
         call zeroEqual
-        DPOP eax
-        add eax, '1'
-        DPUSH eax
+        DPOP rax
+        add rax, '1'
+        DPUSH rax
         call emit
 
         DPUSH 1
         call zeroEqual
-        DPOP eax
-        add eax, '1'
-        DPUSH eax
+        DPOP rax
+        add rax, '1'
+        DPUSH rax
         call emit
 
         ; test +, emit A
@@ -366,8 +326,8 @@ testword:
         call emit
 
         ; test NAND, emit O
-        DPUSH 0xffffffff
-        DPUSH 0xffffffb0
+        DPUSH 0xffffffffffffffff
+        DPUSH 0xffffffffffffffb0
         call nand
         call emit
 
@@ -394,6 +354,9 @@ testword:
         call here
         call fetch              ; save the value of here on the stack
 
+        DPUSH '*'
+        call emit
+
         DPUSH 69
         call here
         call store
@@ -407,6 +370,8 @@ testword:
 
         ; test dictionary structure
         DPUSH here_entry
+        DPUSH CELLSIZE
+        call plus
         call cfetch
         DPUSH '0'
         call plus
@@ -416,6 +381,8 @@ testword:
         call emit
 
         DPUSH here_entry
+        DPUSH CELLSIZE
+        call plus
         DPUSH 1
         call plus
         DPUSH 4
@@ -425,12 +392,10 @@ testword:
         ; more test for dictionary structure
         ; print the name of the word preceeding HERE
         DPUSH here_entry
-        call dup
-        call cfetch
-        DPUSH 1
-        call plus
-        call plus               ; address of the link
         call fetch              ; address of the linked entry
+
+        DPUSH CELLSIZE
+        call plus               ; address of the count
 
         call dup
         call cfetch             ; get the count and move it out of the way
