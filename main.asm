@@ -91,7 +91,19 @@ emit:
         add ebp, CELLSIZE
         ret
 
+;; SP@
+spFetch:
+        mov eax, ebp
+        DPUSH eax
+        ret
 
+;; RP@
+rpFetch:
+        mov eax, esp
+        DPUSH eax
+        ret
+
+;; --- more code ---
 ;; TYPE
 asmtype:
         mov eax, 4
