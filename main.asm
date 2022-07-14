@@ -233,8 +233,9 @@ cr:
 
 .entry cfetch,2,"C@",cr_entry,0
         DPOP eax
-        mov ebx, [eax]
-        DPUSH bl
+        xor ebx, ebx
+        mov bl, [eax]
+        DPUSH ebx
         ret
 
 .entry cstore,2,"C!",cfetch_entry,0
