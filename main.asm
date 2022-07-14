@@ -45,7 +45,7 @@ CURRENTWORD:
 ;; dictionary here?
 ;; colon definition   6 SQUARE link flags?    call DUP   call *   RET
 ;;  code definition   3 DUP  link flags?   mov ebp, eax   DPUSH eax  RET
-SECTION mysection
+SECTION mysection,EWR
 DICTIONARY:
 ;; primitives
 ;; @ (FETCH)

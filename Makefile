@@ -3,7 +3,7 @@ OBJECT=main.o
 ASM=nasm
 LD=ld
 ASMFLAGS=-f elf
-LDFLAGS=-m elf_i386
+LDFLAGS=-m elf_i386 --omagic
 
 .PHONY: clean
 
