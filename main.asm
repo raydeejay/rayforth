@@ -47,9 +47,147 @@ CURRENTWORD:
 ;;  code definition   3 DUP  link flags?   mov ebp, eax   DPUSH eax  RET
 SECTION mysection
 DICTIONARY:
+;; primitives
+;; @ (FETCH)
+fetch_entry:
+        db 1, "@"
+        dd 0
+        db 0
+fetch:
+        DPOP eax
+        mov ebx, [eax]
+        DPUSH ebx
+        ret
+
+;; ! (STORE)
+store_entry:
+        db 1, "!"
+        dd fetch_entry
+        db 0
+store:
+        DPOP eax
+        DPOP ebx
+        mov [eax], ebx
+        ret
+
+;; SP@
+spFetch_entry:
+        db 3, "SP@"
+        dd store_entry
+        db 0
+spFetch:
+        mov eax, ebp
+        DPUSH eax
+        ret
+
+;; RP@
+rpFetch_entry:
+        db 3, "RP@"
+        dd spFetch_entry
+        db 0
+rpFetch:
+        mov eax, esp
+        DPUSH eax
+        ret
+
+;; 0=
+zeroEqual_entry:
+        db 2, "0="
+        dd rpFetch_entry
+        db 0
+zeroEqual:
+        DPOP eax
+        test eax, eax
+        lahf
+        shr eax, 6+8
+        and eax, 1
+        mov ebx, 0
+        sub ebx, eax
+        DPUSH ebx
+        ret
+
+;; +
+plus_entry:
+        db 1, "+"
+        dd zeroEqual_entry
+        db 0
+plus:
+        DPOP eax
+        DPOP ebx
+        add eax, ebx
+        DPUSH eax
+        ret
+
+;; NAND
+nand_entry:
+        db 4, "NAND"
+        dd plus_entry
+        db 0
+nand:
+        DPOP eax
+        DPOP ebx
+        and eax, ebx
+        not eax
+        DPUSH eax
+        ret
+
+;; EXIT
+exit_entry:
+        db 4, "EXIT"
+        dd nand_entry
+        db 0
+exit:
+        pop eax
+        pop ebx
+        push eax
+        ret
+
+;; KEY
+;; ideally we should set the terminal to raw or something first
+key_entry:
+        db 3, "KEY"
+        dd exit_entry
+        db 0
+key:
+        sub ebp, 4
+        mov eax, 3
+        mov ebx, 1
+        mov ecx, ebp
+        mov edx, 1
+        int 0x80
+        ret
+
+;; EMIT
+emit_entry:
+        db 4, "EMIT"
+        dd key_entry
+        db 0
+emit:
+        mov eax, ebp
+        DPUSH eax
+        DPUSH 1
+        call type
+        add ebp, CELLSIZE
+        ret
+
+;; end of SectorForth primitives, start of mine
+
+;; TYPE
+type_entry:
+        db 4, "TYPE"
+        dd emit_entry
+        db 0
+type:
+        mov eax, 4
+        mov ebx, 1
+        DPOP edx
+        DPOP ecx
+        int 0x80
+        ret
+
 square_entry:
         db 6, "SQUARE"
-        dd 0
+        dd type_entry
         db 0
 square:
         call dup
@@ -74,6 +212,15 @@ multiply:
         DPOP ebx
         mul ebx
         DPUSH eax
+        ret
+
+cr_entry:
+        db 2, "CR"
+        dd multiply_entry
+        db 0
+cr:
+        DPUSH 10
+        call emit
         ret
 
 
@@ -103,117 +250,20 @@ init:
         mov ebp, DATASTACKBOTTOM
         ret
 
-;; primitives
-;; @ (FETCH)
-fetch:
-        DPOP eax
-        mov ebx, [eax]
-        DPUSH ebx
-        ret
-
-;; ! (STORE)
-store:
-        DPOP eax
-        DPOP ebx
-        mov [eax], ebx
-        ret
-
-;; EMIT
-emit:
-        mov eax, ebp
-        DPUSH eax
-        DPUSH 1
-        call asmtype
-        add ebp, CELLSIZE
-        ret
-
-;; SP@
-spFetch:
-        mov eax, ebp
-        DPUSH eax
-        ret
-
-;; RP@
-rpFetch:
-        mov eax, esp
-        DPUSH eax
-        ret
-
-;; 0=
-zeroEqual:
-        DPOP eax
-        test eax, eax
-        lahf
-        shr eax, 6+8
-        and eax, 1
-        mov ebx, 0
-        sub ebx, eax
-        DPUSH ebx
-        ret
-
-;; +
-plus:
-        DPOP eax
-        DPOP ebx
-        add eax, ebx
-        DPUSH eax
-        ret
-
-;; NAND
-nand:
-        DPOP eax
-        DPOP ebx
-        and eax, ebx
-        not eax
-        DPUSH eax
-        ret
-
-;; EXIT
-exit:
-        pop eax
-        pop ebx
-        push eax
-        ret
-
-;; KEY
-;; ideally we should set the terminal to raw or something first
-key:
-        sub ebp, 4
-        mov eax, 3
-        mov ebx, 1
-        mov ecx, ebp
-        mov edx, 1
-        int 0x80
-        ret
-
 
 ;; --- more code ---
-;; TYPE
-asmtype:
-        mov eax, 4
-        mov ebx, 1
-        DPOP edx
-        DPOP ecx
-        int 0x80
-        ret
-
 ;; function things
 display:
         DPUSH PAD
         DPUSH 128
-        call asmtype
+        call type
         call cr
         ret
 
 hello:
         DPUSH helloStr
         DPUSH helloLen
-        call asmtype
-        ret
-
-cr:
-        DPUSH 10
-        call emit
+        call type
         ret
 
 ;; Inner interpreter stuff
@@ -297,7 +347,7 @@ testword:
         ; test for KEY
         DPUSH keytestStr
         DPUSH keytestStrLen
-        call asmtype
+        call type
         call key
         call emit
 
