@@ -132,6 +132,12 @@ nand:
         DPUSH eax
         ret
 
+;; EXIT
+exit:
+        pop eax
+        pop ebx
+        push eax
+        ret
 
 ;; --- more code ---
 ;; TYPE
@@ -181,6 +187,18 @@ coda:
         mov ebx, 0
         int 0x80
 
+testexitinner:
+        DPUSH 'A'
+        call emit
+        call exit               ; exits from outer
+        ret
+
+testexitouter:
+        call testexitinner
+        DPUSH 'B'
+        call emit
+        ret
+
 testword:
         ; test stack and emit, emit EDC
         DPUSH 'C'
@@ -225,5 +243,7 @@ testword:
         call nand
         call emit
 
+        ; test exit, emit A but not B
+        call testexitouter
         call cr
         ret
