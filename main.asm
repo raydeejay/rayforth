@@ -43,6 +43,39 @@ CURRENTWORD:
         resb 128
 
 ;; dictionary here?
+;; colon definition   6 SQUARE link flags?    call DUP   call *   RET
+;;  code definition   3 DUP  link flags?   mov ebp, eax   DPUSH eax  RET
+SECTION mysection
+DICTIONARY:
+square_entry:
+        db 6, "SQUARE"
+        dd 0
+        db 0
+square:
+        call dup
+        call multiply
+        ret
+
+dup_entry:
+        db 3, "DUP"
+        dd square_entry
+        db 0
+dup:
+        mov eax, [ebp]
+        DPUSH eax
+        ret
+
+multiply_entry:
+        db 1, "*"
+        dd dup_entry
+        db 0
+multiply:
+        DPOP eax
+        DPOP ebx
+        mul ebx
+        DPUSH eax
+        ret
+
 
 ;; the program code here
 SECTION .text
@@ -268,6 +301,14 @@ testword:
         call key
         call emit
 
+        ; test SQUARE colon definition (but not the whole entry)
+        ; also tests * and DUP code definitions
+        ; emit C
+        DPUSH 8
+        call square
+        DPUSH 3
+        call plus
+        call emit
 
         call cr
         ret
