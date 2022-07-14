@@ -40,9 +40,9 @@ align 8
 
 
 ;; Other memory zones
-PAD:
+PADDATA:
         resb 4096
-TIB:
+TIBDATA:
         resb 4096
 
 ;; dictionary here?
@@ -213,7 +213,11 @@ DICTIONARY:
         mov [rax], bl
         ret
 
+.variable "STATE", state, 76
 .variable "HERE", here, 77
+.variable "LATEST", latest, 78
+.variable "TIB", TIB, TIBDATA
+.variable ">IN", TIBIN, 0
 
 ;; the program code here
 SECTION .text
@@ -223,12 +227,12 @@ global _start
 
 ;; perform various initialization stuff
 init:
-        mov rdi, PAD
+        mov rdi, PADDATA
         mov rcx, 4096
         mov al, ' '
         rep stosb
 
-        mov rdi, TIB
+        mov rdi, TIBDATA
         mov rcx, 4096
         mov al, ' '
         rep stosb
@@ -245,7 +249,7 @@ init:
 ;; --- more code ---
 ;; function things
 display:
-        DPUSH PAD
+        DPUSH PADDATA
         DPUSH 4096
         call type
         call cr
@@ -302,7 +306,7 @@ testword:
         ; to the pad ("orth V0", 10)
         DPUSH helloStr+4
         call fetch
-        DPUSH PAD
+        DPUSH PADDATA
         call store
 
         ; test 0=, emit 0 and 1
@@ -418,11 +422,11 @@ testword:
         call cfetch
         call emit
 
-        ; test C!, emit X and modifies PAD too
+        ; test C!, emit X and modifies PADDATA too
         DPUSH 88
-        DPUSH PAD
+        DPUSH PADDATA
         call cstore
-        DPUSH PAD
+        DPUSH PADDATA
         call cfetch
         call emit
 
