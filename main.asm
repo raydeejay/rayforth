@@ -68,6 +68,30 @@ init:
         ret
 
 ;; primitives
+;; @ (FETCH)
+fetch:
+        DPOP eax
+        mov ebx, [eax]
+        DPUSH ebx
+        ret
+
+;; ! (STORE)
+store:
+        DPOP eax
+        DPOP ebx
+        mov [eax], ebx
+        ret
+
+;; EMIT
+emit:
+        mov eax, ebp
+        DPUSH eax
+        DPUSH 1
+        call asmtype
+        add ebp, CELLSIZE
+        ret
+
+
 ;; TYPE
 asmtype:
         mov eax, 4
@@ -82,6 +106,7 @@ display:
         DPUSH PAD
         DPUSH 128
         call asmtype
+        call cr
         ret
 
 hello:
@@ -90,7 +115,9 @@ hello:
         call asmtype
         ret
 
-testword:
+cr:
+        DPUSH 10
+        call emit
         ret
 
 ;; Inner interpreter stuff
@@ -103,11 +130,27 @@ testword:
 _start:
         call init
         call hello
-        call display
         call testword
+        call display
 
 ;;;; THIS IS THE EXIT POINT
 coda:
         mov eax, 1
         mov ebx, 0
         int 0x80
+
+testword:
+        DPUSH 'C'
+        DPUSH 'D'
+        DPUSH 'E'
+        call emit
+        call emit
+        call emit
+        call cr
+
+        DPUSH helloStr+4
+        call fetch
+        DPUSH PAD
+        call store
+
+        ret
