@@ -223,6 +223,15 @@ cr:
         call emit
         ret
 
+here_entry:
+        db 4, "HERE"
+        dd cr_entry
+        db 0
+here_data:
+        dd 0
+here:
+        DPUSH here_data
+        ret
 
 ;; the program code here
 SECTION .text
@@ -360,5 +369,20 @@ testword:
         call plus
         call emit
 
+        ; test HERE as a variable, emit E
+        call here
+        call fetch              ; save the value of here on the stack
+
+        DPUSH 69
+        call here
+        call store
+        call here
+        call fetch
+        call emit
+
+        call here
+        call store              ; and restore the value of here
+
+        ; end of tests
         call cr
         ret
