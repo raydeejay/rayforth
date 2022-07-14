@@ -58,22 +58,14 @@ SECTION mysection,EWR
 DICTIONARY:
 ;; primitives
 ;; @ (FETCH)
-fetch_entry:
-        db 1, "@"
-        dd 0
-        db 0
-fetch:
+.entry fetch,1,"@",0,0
         DPOP eax
         mov ebx, [eax]
         DPUSH ebx
         ret
 
 ;; ! (STORE)
-store_entry:
-        db 1, "!"
-        dd fetch_entry
-        db 0
-store:
+.entry store,1,"!",fetch_entry,0
         DPOP eax
         DPOP ebx
         mov [eax], ebx
