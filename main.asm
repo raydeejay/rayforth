@@ -204,9 +204,16 @@ dup:
         DPUSH eax
         ret
 
+.entry swap,4,"SWAP",dup_entry,0
+        DPOP eax
+        DPOP ebx
+        DPUSH eax
+        DPUSH ebx
+        ret
+
 multiply_entry:
         db 1, "*"
-        dd dup_entry
+        dd swap_entry
         db 0
 multiply:
         DPOP eax
