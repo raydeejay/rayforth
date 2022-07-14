@@ -4,6 +4,7 @@ bits 64
 
 ;; Constants
         CELLSIZE equ 8
+        STACKSIZE equ 64
 
 ;; static data stuff
 SECTION .data
@@ -233,7 +234,7 @@ init:
         rep stosb
 
         mov rdi, DATASTACK
-        mov rcx, CELLSIZE*64
+        mov rcx, CELLSIZE*STACKSIZE
         mov al, 0
         rep stosb
 
