@@ -40,9 +40,9 @@ align 8
 
 ;; Other memory zones
 PAD:
-        resb 128
-CURRENTWORD:
-        resb 128
+        resb 4096
+TIB:
+        resb 4096
 
 ;; dictionary here?
 ;; colon and code definitions have the same structure
@@ -223,13 +223,13 @@ global _start
 ;; perform various initialization stuff
 init:
         mov rdi, PAD
-        mov rcx, 128
-        mov al, 65
+        mov rcx, 4096
+        mov al, ' '
         rep stosb
 
-        mov rdi, CURRENTWORD
-        mov rcx, 32
-        mov al, 32
+        mov rdi, TIB
+        mov rcx, 4096
+        mov al, ' '
         rep stosb
 
         mov rdi, DATASTACK
@@ -245,7 +245,7 @@ init:
 ;; function things
 display:
         DPUSH PAD
-        DPUSH 128
+        DPUSH 4096
         call type
         call cr
         ret
