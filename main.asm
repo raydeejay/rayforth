@@ -399,7 +399,7 @@ testword:
 
         ; test dictionary structure
         DPUSH here_entry
-        call fetch              ; should be C@....
+        call cfetch
         DPUSH '0'
         call plus
         call emit
