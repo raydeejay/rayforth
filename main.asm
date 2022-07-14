@@ -9,6 +9,9 @@ align 4
         helloStr db "RayForth v0", 10
         helloLen equ $ -helloStr
 
+        keytestStr db "Press a key and it will be printed back", 10
+        keytestStrLen equ $ -keytestStr
+
         program db "65 emit 10 emit", 10
         programLen equ $ -program
 
@@ -139,6 +142,18 @@ exit:
         push eax
         ret
 
+;; KEY
+;; ideally we should set the terminal to raw or something first
+key:
+        sub ebp, 4
+        mov eax, 3
+        mov ebx, 1
+        mov ecx, ebp
+        mov edx, 1
+        int 0x80
+        ret
+
+
 ;; --- more code ---
 ;; TYPE
 asmtype:
@@ -245,5 +260,14 @@ testword:
 
         ; test exit, emit A but not B
         call testexitouter
+
+        ; test for KEY
+        DPUSH keytestStr
+        DPUSH keytestStrLen
+        call asmtype
+        call key
+        call emit
+
+
         call cr
         ret
