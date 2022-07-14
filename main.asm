@@ -123,6 +123,15 @@ plus:
         DPUSH eax
         ret
 
+;; NAND
+nand:
+        DPOP eax
+        DPOP ebx
+        and eax, ebx
+        not eax
+        DPUSH eax
+        ret
+
 
 ;; --- more code ---
 ;; TYPE
@@ -208,6 +217,12 @@ testword:
         DPUSH 60
         DPUSH 5
         call plus
+        call emit
+
+        ; test NAND, emit O
+        DPUSH 0xffffffff
+        DPUSH 0xffffffb0
+        call nand
         call emit
 
         call cr
