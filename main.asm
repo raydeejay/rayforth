@@ -258,7 +258,7 @@ hello:
 
 ;; Inner interpreter stuff
 ;; do we even have one? :-/
-
+;; answer is nope, with the magic of STC
 
 ;; Outer interpreter stuff
 
