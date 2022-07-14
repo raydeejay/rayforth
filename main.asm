@@ -173,6 +173,7 @@ coda:
         int 0x80
 
 testword:
+        ; test stack and emit, emit EDC
         DPUSH 'C'
         DPUSH 'D'
         DPUSH 'E'
@@ -181,11 +182,14 @@ testword:
         call emit
         call cr
 
+        ; test fetch and store, copy 4 bytes of hello string
+        ; to the pad
         DPUSH helloStr+4
         call fetch
         DPUSH PAD
         call store
 
+        ; test 0=, emit 0 and 1
         DPUSH 0
         call zeroEqual
         DPOP eax
@@ -200,6 +204,7 @@ testword:
         DPUSH eax
         call emit
 
+        ; test +, emit A
         DPUSH 60
         DPUSH 5
         call plus
