@@ -297,8 +297,8 @@ testword:
         call emit
         call cr
 
-        ; test fetch and store, copy 4 bytes of hello string
-        ; to the pad
+        ; test fetch and store, copy 8 bytes of hello string (offset 4)
+        ; to the pad ("orth V0", 10)
         DPUSH helloStr+4
         call fetch
         DPUSH PAD
