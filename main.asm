@@ -89,58 +89,58 @@ SECTION mysection,EWR
 DICTIONARY:
 ;; primitives
 .colon "@",fetch
-        DPOP rax
-        mov qword rbx, qword [rax]
-        DPUSH rbx
+        DPOP r8
+        mov qword r9, qword [r8]
+        DPUSH r9
         ret
 
 .colon "!",store
-        DPOP rax
-        DPOP rbx
-        mov qword [rax], qword rbx
+        DPOP r8
+        DPOP r9
+        mov qword [r8], qword r9
         ret
 
 .colon "SP@", spFetch
-        mov rax, rbp
-        DPUSH rax
+        mov r8, rbp
+        DPUSH r8
         ret
 
 .colon "RP@", rpFetch
-        mov rax, rsp
-        DPUSH rax
+        mov r8, rsp
+        DPUSH r8
         ret
 
 .colon "0=", zeroEqual
-        DPOP rax
-        test rax, rax
+        DPOP r8
+        test r8, r8
         pushf
-        pop rax
-        shr rax, 6+8
-        and rax, 1
-        mov rbx, 0
-        sub rbx, rax
-        DPUSH rbx
+        pop r8
+        shr r8, 6+8
+        and r8, 1
+        mov r9, 0
+        sub r9, r8
+        DPUSH r9
         ret
 
 .colon "+", plus
-        DPOP rax
-        DPOP rbx
-        add rax, rbx
-        DPUSH rax
+        DPOP r8
+        DPOP r9
+        add r8, r9
+        DPUSH r8
         ret
 
 .colon "NAND", nand
-        DPOP rax
-        DPOP rbx
-        and rax, rbx
-        not rax
-        DPUSH rax
+        DPOP r8
+        DPOP r9
+        and r8, r9
+        not r8
+        DPUSH r8
         ret
 
 .colon "EXIT", exit
-        pop rax
-        pop rbx
-        push rax
+        pop r8
+        pop r9
+        push r8
         ret
 
 ;; ideally we should set the terminal to raw or something first
@@ -154,8 +154,8 @@ DICTIONARY:
         ret
 
 .colon "EMIT", emit
-        mov rax, rbp
-        DPUSH rax
+        mov r8, rbp
+        DPUSH r8
         DPUSH 1
         call type
         add rbp, CELLSIZE
@@ -178,22 +178,31 @@ DICTIONARY:
         ret
 
 .colon "DUP", dup
-        mov rax, [rbp]
-        DPUSH rax
+        mov r8, [rbp]
+        DPUSH r8
         ret
 
 .colon "SWAP", swap
-        DPOP rax
-        DPOP rbx
-        DPUSH rax
-        DPUSH rbx
+        DPOP r8
+        DPOP r9
+        DPUSH r8
+        DPUSH r9
+        ret
+
+.colon "DROP", drop
+        add rbp, CELLSIZE
+        ret
+
+.colon "OVER", over
+        mov r8, [ebp+CELLSIZE]
+        DPUSH r8
         ret
 
 .colon "*", multiply
-        DPOP rax
-        DPOP rbx
-        mul rbx
-        DPUSH rax
+        DPOP r8
+        DPOP r9
+        imul r8, r9
+        DPUSH r8
         ret
 
 .colon "CR", cr
@@ -202,17 +211,22 @@ DICTIONARY:
         ret
 
 .colon "C@", cfetch
-        DPOP rax
+        DPOP r8
         xor rbx, rbx
-        mov bl, [rax]
+        mov bl, [r8]            ; hmmm... we do want to read a single char here
         DPUSH rbx
         ret
 
 .colon "C!", cstore
-        DPOP rax
-        DPOP rbx
-        mov [rax], bl
+        DPOP r8
+        DPOP rbx                ; same here
+        mov [r8], bl
         ret
+
+.colon "BYE", bye
+        mov rax, 1
+        mov rbx, 0
+        int 0x80
 
 .variable "STATE", state, 76
 .variable "HERE", here, 77
