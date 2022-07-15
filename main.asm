@@ -34,7 +34,7 @@ align 8
 %endmacro
 
 %macro DPOP 1
-        mov %1, [rbp]
+        mov qword %1, qword [rbp]
         add rbp, CELLSIZE
 %endmacro
 
