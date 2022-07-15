@@ -70,8 +70,9 @@ TIBDATA:
         head %1,%2,0
         val_ %+ %2 dq %3
 %{2}:
-        mov rax, val_ %+ %2
-        DPUSH [rax]
+        mov r8, val_ %+ %2
+        mov r9, [r8]
+        DPUSH r9
         ret
 %endmacro
 
