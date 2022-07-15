@@ -15,8 +15,8 @@ align 8
         keytestStr db "Press a key and it will be printed back", 10
         keytestStrLen equ $ -keytestStr
 
-        program db "65 emit 10 emit", 10
-        programLen equ $ -program
+        notFoundMsgStr db " not found"
+        notFoundMsgLen equ $ -notFoundMsgStr
 
 
 ;; here's where these things go, apparently
@@ -43,6 +43,8 @@ align 8
 PADDATA:
         resb 4096
 TIBDATA:
+        resb 4096
+WORDBUFFER:
         resb 4096
 
 ;; dictionary here?
@@ -234,6 +236,257 @@ DICTIONARY:
 .variable "TIB", TIB, TIBDATA
 .variable ">IN", TIBIN, 0
 
+.colon "REFILL", refill
+        mov rax, 3
+        mov rbx, 1
+        mov rcx, TIBDATA
+        mov rdx, 4096
+        int 0x80
+
+        ; rax holds size or -errno
+        test rax, rax
+        js refill_error
+
+        ; no error, reset >IN and return true
+        DPUSH 0
+        call TIBIN
+        call store
+        DPUSH -1
+        ret
+
+refill_error:
+        DPUSH 0                 ; return false
+        ret
+
+;; Outer interpreter stuff
+.constant "BL", bl_, ' '
+
+.colon "COUNT", count
+        call dup
+        call cfetch
+        call swap
+        DPUSH 1
+        call plus
+        call swap
+        ret
+
+.colon "WORD", word_
+        call TIB
+        call fetch
+        call TIBIN
+        call fetch
+        call plus
+
+        ; compare char with delimiter
+        ; the address of the potential word is on TOS
+        DPOP rsi
+        ; the delimiter is on TOS now, we'll just point rdi to it
+        mov rdi, rbp
+
+word_skip_delimiters:
+        cmpsb
+
+        ; if not equal we have a word
+        jne skipped_delimiters
+
+        ; if we went over the end of TIBDATA, we're done
+        cmp rsi, TIBDATA+4096
+        je tibdata_was_empty
+
+        ; otherwise move to the next char and repeat
+        dec rdi                 ; RDI should always point to the same char
+        jmp word_skip_delimiters
+
+tibdata_was_empty:
+        mov rsi, WORDBUFFER
+        mov qword [rsi], qword 0
+
+        ; clean up
+        call drop
+        DPUSH WORDBUFFER
+
+        ret
+
+skipped_delimiters:
+        ; readjust the pointers back 1 char
+        dec rsi
+        dec rdi
+        DPUSH rsi               ; save the beginning of the word
+
+find_closing_delimiter:
+        ; we have a word, find the end
+        ; the word address is on rsi (and on the stack)
+        ; the delimiter is on rdi (and on the stack under TOS)
+
+        ; compare char with delimiter
+        cmpsb
+
+        ; if we find delimiter, we are past the word
+        je found_closing_delimiter
+
+        ; if we went over the end of TIBDATA, return right away
+        cmp rsi, TIBDATA+4096
+        je found_closing_delimiter
+
+        ; otherwise move along to the next char
+        dec rdi                 ; RDI should always point to the same char
+        jmp find_closing_delimiter
+
+found_closing_delimiter:
+        ; update >IN
+        ; with the difference between end of parsing and TIBDATA
+        mov rcx, rsi
+        sub rcx, TIBDATA
+        DPUSH rcx
+        call TIBIN
+        call store
+
+        ; we have the end, calculate the length now
+        ; rsi holds the end
+        ; the word address is on the stack
+        mov rcx, rsi
+        DPOP rax
+        sub rcx, rax            ; load the number of chars on RCX (end-start)
+        dec rcx                 ; correct the off by one
+
+        mov rsi, rax
+        mov rdi, WORDBUFFER
+        mov [rdi], cl           ; put the count
+
+        ; put the string
+        inc rdi
+        rep movsb
+
+        ; clear the delimiter off the stack
+        call drop
+
+        ; return the address of the parsed word
+        DPUSH WORDBUFFER
+        ret
+
+.colon "FIND", find             ; ( c-addr -- c-addr 0 | xt 1 | xt -1 )
+        ; store the address of the source string on r10
+        mov r10, [rbp]
+        ; store the address of the link on r11
+        call latest
+        call fetch
+        DPOP r11
+
+find_setup:
+        ; load rsi and rdi
+        mov rsi, r10
+        mov rdi, r11
+
+        ; first move over the link, to the count+name
+        add rdi, CELLSIZE
+
+        ; compare the string lengths
+find_check_lengths:
+        xor rbx, rbx
+        xor rcx, rcx
+        mov bl, [rsi]
+        mov cl, [rdi]
+        cmp bl, cl
+
+        je find_check_names
+
+        ; if not the same, next word
+        ; follow the link
+        mov r11, [r11]
+        mov rdi, r11
+
+        ; if the link is 0, not found
+        test rdi, rdi
+        jz find_not_found
+
+        ; otherwise repeat the process
+        jmp find_setup
+
+find_check_names:
+        ; count is still loaded on bl and cl
+        ; advance the pointers over the counts
+        inc rsi
+        inc rdi
+
+        ; compare strings, count is already loaded in cl/rcx
+        repe cmpsb
+
+        ; if they're equal we found a word
+        je find_word_found
+
+        ; if they're different move to the next link
+        mov r11, [r11]
+        mov rdi, r11
+
+        ; if the link is 0, not found
+        test rdi, rdi
+        jz find_not_found
+
+        ; else check the next entry
+        jmp find_setup
+
+find_not_found:
+        ; return c-addr and 0
+        DPUSH 0
+        ret
+
+find_word_found:
+        ; drop c-addr
+        call drop
+        ; push xt (code address)
+        DPUSH rdi
+        ; push either 1 (imm) or -1 (non-imm)
+        DPUSH -1
+        ret
+
+
+.colon "INTERPRET", interpret
+        call find
+        DPOP r10
+        test r10, r10
+
+        ; if found, execute it
+        jnz interpret_execute
+
+        ; if not found, complain
+        call count
+        call type
+        DPUSH notFoundMsgStr
+        DPUSH notFoundMsgLen
+        call type
+        call cr
+        ret
+
+interpret_execute:
+        DPOP r10
+        call r10
+        ret
+
+
+.colon "QUIT", quit
+        ; interpret some words from TIB separated by spaces(!)
+        call refill
+quit_again:
+        call bl_
+        call word_
+
+        ; exit if there are no more words left (WORD returns "")
+        call dup
+        call cfetch
+        DPOP rax
+        test rax, rax
+        jz endquit
+
+        call interpret
+        jmp quit_again
+
+endquit:
+        call drop
+        ret
+
+end_of_builtins:
+;; should I add a blob of uninitialised (or initialised) space here?
+
 ;; the program code here
 SECTION .text
 align 8
@@ -258,6 +511,12 @@ init:
         rep stosb
 
         mov rbp, DATASTACKBOTTOM
+
+        mov rsi, val_here
+        mov qword [rsi], end_of_builtins
+        mov rsi, val_latest
+        mov qword [rsi], quit_entry
+
         ret
 
 
@@ -280,20 +539,20 @@ hello:
 ;; do we even have one? :-/
 ;; answer is nope, with the magic of STC
 
-;; Outer interpreter stuff
-
 ;;;; THIS IS THE ENTRY POINT
 _start:
         call init
         call hello
-        call testword
+        ;call testword
+        ;call testword2
+        call quit
         call display
+        jmp coda
+
 
 ;;;; THIS IS THE EXIT POINT
 coda:
-        mov rax, 1
-        mov rbx, 0
-        int 0x80
+        call bye
 
 testexitinner:
         DPUSH 'A'
@@ -444,6 +703,48 @@ testword:
         DPUSH PADDATA
         call cfetch
         call emit
+
+        call cr
+        ret
+
+testword2:
+        ; test REFILL, BL, WORD, and COUNT
+        call refill
+        call bl_
+        call word_
+        call count
+        call type
+        DPUSH '.'
+        call emit
+        call cr
+        call bl_
+        call word_
+        call count
+        call type
+        DPUSH '.'
+        call emit
+        call cr
+        call bl_
+        call word_
+        call count
+        call type
+        DPUSH '.'
+        call emit
+        call cr
+        call bl_
+        call word_
+        call count
+        call type
+        DPUSH '.'
+        call emit
+        call cr
+        call bl_
+        call word_
+        call count
+        call type
+        DPUSH '.'
+        call emit
+        call cr
 
         ; end of tests
         call cr
