@@ -462,6 +462,44 @@ interpret_execute:
         call r10
         ret
 
+;; temporary test word
+.colon "NUM",num
+        DPUSH 789
+        ret
+
+.colon ".", period              ; ( n -- )
+        DPOP rax
+        test rax, rax
+        jz period_zero
+
+        xor r10, r10
+period_process_digit:
+        xor rdx, rdx
+        mov rbx, 10
+        div rbx
+        add rdx, '0'            ; make a letter
+        DPUSH rdx
+        inc r10
+        test rax, rax
+        jnz period_process_digit
+
+period_emit_digit:
+        ; no more digits, print them back from the stack
+        call emit
+        dec r10
+        jnz period_emit_digit
+
+        jmp period_done
+
+period_zero:
+        DPUSH '0'
+        call emit
+
+period_done:
+        DPUSH ' '
+        call emit
+        ret
+
 
 .colon "QUIT", quit
         ; interpret some words from TIB separated by spaces(!)
