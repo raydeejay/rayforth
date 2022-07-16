@@ -62,6 +62,9 @@ align 8
         notFoundMsgStr db " not found"
         notFoundMsgLen equ $ -notFoundMsgStr
 
+        promptStr db " ok", 10
+        promptLen equ $ -promptStr
+
 
 ;; here's where these things go, apparently
 SECTION .bss
@@ -98,13 +101,13 @@ WORDBUFFER:
 ;; Here we create some macros for easy creation of dictionary entries,
 ;; along with labels than can be used later to call code or address
 ;; data directly from assembly
-        
+
 ;; inspired by Itsy Forth, modified for STC and additional
 ;; code. .CONSTANT and .VARIABLE compile their own code straight
 ;; away. .CODE is gone, since all definitions are the same under STC,
 ;; but may come back later if I find some utility to having two
 ;; different words.
-        
+
 %define link 0
 %define IMMEDIATE 0x80
 
@@ -290,6 +293,11 @@ DICTIONARY:
 .variable ">IN", TIBIN, 0
 
 .colon "REFILL", refill
+        mov rdi, TIBDATA
+        mov rcx, BUFFERSIZE
+        mov al, ' '
+        rep stosb
+
         mov rax, 3
         mov rbx, 1
         mov rcx, TIBDATA
@@ -300,6 +308,15 @@ DICTIONARY:
         test rax, rax
         js refill_error
 
+        ; no error, so let's patch that possible 0x0A...
+        cmp rax, BUFFERSIZE
+        je refill_dont_patch
+
+        add rax, TIBDATA
+        dec rax
+        mov [rax], byte ' '
+
+refill_dont_patch:
         ; no error, reset >IN and return true
         DPUSH 0
         call TIBIN
@@ -557,11 +574,13 @@ period_done:
 .colon "QUIT", quit
         ; interpret some words from TIB separated by spaces(!)
         call refill
-quit_again:
+        call drop               ; should do something with this flag(!)
+
+quit_next_word:
         call bl_
         call word_
 
-        ; exit if there are no more words left (WORD returns "")
+        ; finished if there are no more words left (WORD returns "")
         call dup
         call cfetch
         DPOP W
@@ -569,11 +588,14 @@ quit_again:
         jz endquit
 
         call interpret
-        jmp quit_again
+        jmp quit_next_word
 
 endquit:
+        DPUSH promptStr
+        DPUSH promptLen
+        call type
         call drop
-        ret
+        jmp quit
 
 end_of_builtins:
 ;; should I add a blob of uninitialised (or initialised) space here?
