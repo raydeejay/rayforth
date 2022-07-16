@@ -28,9 +28,9 @@
 ;; preserved registers, I ended up with the following allocation,
 ;; assigned following the recommendations from Moving Forth:
 
+;; %define IP rip
 ;; %define RSP rsp
 %define PSP rbp
-%define IP rip
 %define TOS r15
 %define W r12
 %define X r13
@@ -67,18 +67,18 @@ SECTION .bss
 align 8
 
 ;; Parameter stack
-        DATASTACK resb CELLSIZE*64
+        DATASTACK resb CELLSIZE*STACKSIZE
         DATASTACKBOTTOM equ $ - CELLSIZE
 
 ;; Parameter Stack Macros
 %macro DPUSH 1
-        sub rbp, CELLSIZE
-        mov qword [rbp], qword %1
+        sub PSP, CELLSIZE
+        mov qword [PSP], qword %1
 %endmacro
 
 %macro DPOP 1
-        mov qword %1, qword [rbp]
-        add rbp, CELLSIZE
+        mov qword %1, qword [PSP]
+        add PSP, CELLSIZE
 %endmacro
 
 
@@ -94,7 +94,16 @@ WORDBUFFER:
 ;; colon and code definitions have the same structure
 ;; LINK   FLAGS|COUNT   NAME   code here...
 
-;; inspired by Itsy Forth
+;; Here we create some macros for easy creation of dictionary entries,
+;; along with labels than can be used later to call code or address
+;; data directly from assembly
+        
+;; inspired by Itsy Forth, modified for STC and additional
+;; code. .CONSTANT and .VARIABLE compile their own code straight
+;; away. .CODE is gone, since all definitions are the same under STC,
+;; but may come back later if I find some utility to having two
+;; different words.
+        
 %define link 0
 %define IMMEDIATE 0x80
 
@@ -115,9 +124,9 @@ WORDBUFFER:
         head %1,%2,0
         val_ %+ %2 dq %3
 %{2}:
-        mov r8, val_ %+ %2
-        mov r9, [r8]
-        DPUSH r9
+        mov W, val_ %+ %2
+        mov X, [W]
+        DPUSH X
         ret
 %endmacro
 
@@ -134,76 +143,76 @@ SECTION mysection,EWR
 DICTIONARY:
 ;; primitives
 .colon "@",fetch
-        DPOP r8
-        mov qword r9, qword [r8]
-        DPUSH r9
+        DPOP W
+        mov qword X, qword [W]
+        DPUSH X
         ret
 
 .colon "!",store
-        DPOP r8
-        DPOP r9
-        mov qword [r8], qword r9
+        DPOP W
+        DPOP X
+        mov qword [W], qword X
         ret
 
 .colon "SP@", spFetch
-        mov r8, rbp
-        DPUSH r8
+        mov W, PSP
+        DPUSH W
         ret
 
 .colon "RP@", rpFetch
-        mov r8, rsp
-        DPUSH r8
+        mov W, rsp
+        DPUSH W
         ret
 
 .colon "0=", zeroEqual
-        DPOP r8
-        test r8, r8
+        DPOP W
+        test W, W
         pushf
-        pop r8
-        shr r8, 6+8
-        and r8, 1
-        mov r9, 0
-        sub r9, r8
-        DPUSH r9
+        pop W
+        shr W, 6+8
+        and W, 1
+        mov X, 0
+        sub X, W
+        DPUSH X
         ret
 
 .colon "+", plus
-        DPOP r8
-        DPOP r9
-        add r8, r9
-        DPUSH r8
+        DPOP W
+        DPOP X
+        add W, X
+        DPUSH W
         ret
 
 .colon "NAND", nand
-        DPOP r8
-        DPOP r9
-        and r8, r9
-        not r8
-        DPUSH r8
+        DPOP W
+        DPOP X
+        and W, X
+        not W
+        DPUSH W
         ret
 
 .colon "EXIT", exit
-        pop r8
-        pop r9
-        push r8
+        pop W
+        pop X
+        push W
         ret
 
 ;; ideally we should set the terminal to raw or something first
 .colon "KEY", key
-        sub rbp, 4
+        sub PSP, 4
         mov rax, 3
         mov rbx, 1
-        mov rcx, rbp
+        mov rcx, PSP
         mov rdx, 1
         int 0x80
         ret
 
 .colon "EMIT", emit
-        mov r8, rbp
-        DPUSH r8
+        mov Y, PSP
+        DPUSH Y
         DPUSH 1
         call type
-        add rbp, CELLSIZE
+        add PSP, CELLSIZE
         ret
 
 ;; end of SectorForth primitives, start of mine
@@ -223,31 +232,31 @@ DICTIONARY:
         ret
 
 .colon "DUP", dup
-        mov r8, [rbp]
-        DPUSH r8
+        mov W, [PSP]
+        DPUSH W
         ret
 
 .colon "SWAP", swap
-        DPOP r8
-        DPOP r9
-        DPUSH r8
-        DPUSH r9
+        DPOP W
+        DPOP X
+        DPUSH W
+        DPUSH X
         ret
 
 .colon "DROP", drop
-        add rbp, CELLSIZE
+        add PSP, CELLSIZE
         ret
 
 .colon "OVER", over
-        mov r8, [ebp+CELLSIZE]
-        DPUSH r8
+        mov W, [PSP+CELLSIZE]
+        DPUSH W
         ret
 
 .colon "*", multiply
-        DPOP r8
-        DPOP r9
-        imul r8, r9
-        DPUSH r8
+        DPOP W
+        DPOP X
+        imul W, X
+        DPUSH W
         ret
 
 .colon "CR", cr
@@ -256,16 +265,16 @@ DICTIONARY:
         ret
 
 .colon "C@", cfetch
-        DPOP r8
+        DPOP W
         xor rbx, rbx
-        mov bl, [r8]            ; hmmm... we do want to read a single char here
+        mov bl, [W]            ; hmmm... we do want to read a single char here
         DPUSH rbx
         ret
 
 .colon "C!", cstore
-        DPOP r8
+        DPOP W
         DPOP rbx                ; same here
-        mov [r8], bl
+        mov [W], bl
         ret
 
 .colon "BYE", bye
@@ -324,7 +333,7 @@ refill_error:
         ; the address of the potential word is on TOS
         DPOP rsi
         ; the delimiter is on TOS now, we'll just point rdi to it
-        mov rdi, rbp
+        mov rdi, PSP
 
 word_skip_delimiters:
         cmpsb
@@ -378,9 +387,9 @@ find_closing_delimiter:
 found_closing_delimiter:
         ; update >IN
         ; with the difference between end of parsing and TIBDATA
-        mov rcx, rsi
-        sub rcx, TIBDATA
-        DPUSH rcx
+        mov W, rsi
+        sub W, TIBDATA
+        DPUSH W
         call TIBIN
         call store
 
@@ -388,11 +397,11 @@ found_closing_delimiter:
         ; rsi holds the end
         ; the word address is on the stack
         mov rcx, rsi
-        DPOP rax
-        sub rcx, rax            ; load the number of chars on RCX (end-start)
+        DPOP W
+        sub rcx, W            ; load the number of chars on RCX (end-start)
         dec rcx                 ; correct the off by one
 
-        mov rsi, rax
+        mov rsi, W
         mov rdi, WORDBUFFER
         mov [rdi], cl           ; put the count
 
@@ -409,7 +418,7 @@ found_closing_delimiter:
 
 .colon "FIND", find             ; ( c-addr -- c-addr 0 | xt 1 | xt -1 )
         ; store the address of the source string on r10
-        mov r10, [rbp]
+        mov r10, [PSP]
         ; store the address of the link on r11
         call latest
         call fetch
@@ -515,21 +524,21 @@ interpret_execute:
         test rax, rax
         jz period_zero
 
-        xor r10, r10
+        xor W, W
 period_process_digit:
         xor rdx, rdx
         mov rbx, 10
         div rbx
         add rdx, '0'            ; make a letter
         DPUSH rdx
-        inc r10
+        inc W
         test rax, rax
         jnz period_process_digit
 
 period_emit_digit:
         ; no more digits, print them back from the stack
         call emit
-        dec r10
+        dec W
         jnz period_emit_digit
 
         jmp period_done
@@ -554,8 +563,8 @@ quit_again:
         ; exit if there are no more words left (WORD returns "")
         call dup
         call cfetch
-        DPOP rax
-        test rax, rax
+        DPOP W
+        test W, W
         jz endquit
 
         call interpret
@@ -591,7 +600,7 @@ init:
         mov al, 0
         rep stosb
 
-        mov rbp, DATASTACKBOTTOM
+        mov PSP, DATASTACKBOTTOM
 
         mov rsi, val_here
         mov qword [rsi], end_of_builtins
