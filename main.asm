@@ -1,4 +1,47 @@
 ;; this is a forth written in assembly... or at least it tries to be
+;; (C) 2022 Sergi Reyner
+;; MIT License
+
+;; Register Allocation
+
+;; The System V ABI has just enough registers that we can avoid using
+;; rax-rdx, which are the means to pass parameters to linux syscalls
+
+;; All registers are equally capable (for the most part...)
+
+;; Since this is an STC Forth, the IP register is also the IP register
+;; of the machine, namely rip
+
+;; The parameter stack pointer will reside on rbp, which is the stack
+;; frame pointer and not really relevant as long as we stay on the
+;; Forth and assembly side of code
+
+;; rsi and rdi are used as source and destination pointers for a few
+;; instructions
+
+;; r8 r9 r10 r11 are scratch registers
+;; r12 r13 r14 r15 are preserved between calls
+
+;; There's not really a need to respect the System V ABI, but in the
+;; future we may want to interface with C code. Since there's not
+;; really a cost to this future-proofing, because we have enough
+;; preserved registers, I ended up with the following allocation,
+;; assigned following the recommendations from Moving Forth:
+
+;; %define RSP rsp
+%define PSP rbp
+%define IP rip
+%define TOS r15
+%define W r12
+%define X r13
+%define Y r11                   ; it's going to be a scratch register anyway
+%define UP r14
+
+;; Possibly useful for compiling literals?
+;; x64 provides a new rip-relative addressing mode. Instructions that
+;; refer to a single constant address are encoded as offsets from
+;; rip. For example, the mov rax, [addr] instruction moves 8 bytes
+;; beginning at addr + rip to rax.
 
 bits 64
 
