@@ -578,6 +578,7 @@ endquit:
 end_of_builtins:
 ;; should I add a blob of uninitialised (or initialised) space here?
 
+
 ;; the program code here
 SECTION .text
 align 8
@@ -637,7 +638,7 @@ _start:
         ;call testword
         ;call testword2
         call quit
-        call display
+        ;call display
         jmp coda
 
 
