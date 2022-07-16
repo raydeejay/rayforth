@@ -494,8 +494,8 @@ find_word_found:
 
 .colon "INTERPRET", interpret
         call find
-        DPOP r10
-        test r10, r10
+        DPOP W
+        test W, W
 
         ; if found, execute it
         jnz interpret_execute
@@ -510,8 +510,8 @@ find_word_found:
         ret
 
 interpret_execute:
-        DPOP r10
-        call r10
+        DPOP W
+        call W
         ret
 
 ;; temporary test word
