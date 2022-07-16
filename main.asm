@@ -2,6 +2,8 @@
 ;; (C) 2022 Sergi Reyner
 ;; MIT License
 
+bits 64
+
 ;; Register Allocation
 
 ;; The System V ABI has just enough registers that we can avoid using
@@ -43,11 +45,10 @@
 ;; rip. For example, the mov rax, [addr] instruction moves 8 bytes
 ;; beginning at addr + rip to rax.
 
-bits 64
-
 ;; Constants
         CELLSIZE equ 8
         STACKSIZE equ 64
+        BUFFERSIZE equ 4096
 
 ;; static data stuff
 SECTION .data
@@ -84,11 +85,11 @@ align 8
 
 ;; Other memory zones
 PADDATA:
-        resb 4096
+        resb BUFFERSIZE
 TIBDATA:
-        resb 4096
+        resb BUFFERSIZE
 WORDBUFFER:
-        resb 4096
+        resb BUFFERSIZE
 
 ;; dictionary here?
 ;; colon and code definitions have the same structure
@@ -292,7 +293,7 @@ DICTIONARY:
         mov rax, 3
         mov rbx, 1
         mov rcx, TIBDATA
-        mov rdx, 4096
+        mov rdx, BUFFERSIZE
         int 0x80
 
         ; rax holds size or -errno
@@ -342,7 +343,7 @@ word_skip_delimiters:
         jne skipped_delimiters
 
         ; if we went over the end of TIBDATA, we're done
-        cmp rsi, TIBDATA+4096
+        cmp rsi, TIBDATA+BUFFERSIZE
         je tibdata_was_empty
 
         ; otherwise move to the next char and repeat
@@ -377,7 +378,7 @@ find_closing_delimiter:
         je found_closing_delimiter
 
         ; if we went over the end of TIBDATA, return right away
-        cmp rsi, TIBDATA+4096
+        cmp rsi, TIBDATA+BUFFERSIZE
         je found_closing_delimiter
 
         ; otherwise move along to the next char
@@ -586,12 +587,12 @@ global _start
 ;; perform various initialization stuff
 init:
         mov rdi, PADDATA
-        mov rcx, 4096
+        mov rcx, BUFFERSIZE
         mov al, ' '
         rep stosb
 
         mov rdi, TIBDATA
-        mov rcx, 4096
+        mov rcx, BUFFERSIZE
         mov al, ' '
         rep stosb
 
@@ -614,7 +615,7 @@ init:
 ;; function things
 display:
         DPUSH PADDATA
-        DPUSH 4096
+        DPUSH BUFFERSIZE
         call type
         call cr
         ret
