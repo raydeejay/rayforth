@@ -66,6 +66,10 @@ align 8
         promptStr db " ok", 10
         promptLen equ $-promptStr
 
+        ; pop r8
+        ; sub rbp, 8
+        ; mov [rbp], r8
+        ; 41 58 48 83 ed 08 4c 89 45 00
         doesPrelude db 0x41, 0x58, 0x48, 0x83, 0xED, 0x08, 0x4C, 0x89, 0x45, 0x0
         doesPreludeLen equ $-doesPrelude
 
@@ -978,10 +982,6 @@ dodoes:
         ; compile code on HERE which:
         ; pops top-of-return-stack and pushes to datastack
         ; source code to compile to get the bytes...:
-        ; pop r8
-        ; sub rbp, 8
-        ; mov [rbp], r8
-        ; 41 58 48 83 ed 08 4c 89 45 00
         mov rsi, doesPrelude
         mov rcx, doesPreludeLen
         call here
