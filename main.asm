@@ -126,20 +126,20 @@ WORDBUFFER:
 
 %macro .constant 3
         head %1,%2,0
-        val_ %+ %2 dq %3
 %{2}:
         mov W, val_ %+ %2
         mov X, [W]
         DPUSH X
         ret
+        val_ %+ %2 dq %3        ; value stored here
 %endmacro
 
 %macro .variable 3
         head %1,%2,0
-        val_ %+ %2 dq %3
 %{2}:
         DPUSH val_ %+ %2
         ret
+        val_ %+ %2 dq %3        ; value stored here
 %endmacro
 
 
