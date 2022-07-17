@@ -112,7 +112,7 @@ WORDBUFFER:
 ;; different words.
 
 %define link 0
-%define IMMEDIATE 0x80
+%define IMM 0x80
 
 %macro head 3
 %{2}_entry:
@@ -460,6 +460,10 @@ find_check_lengths:
         xor rcx, rcx
         mov bl, [rsi]
         mov cl, [rdi]
+        ; store the immediate flag and the count separately
+        mov dl, cl
+        and dl, IMM
+        xor cl, dl
         cmp bl, cl
 
         je find_check_names
@@ -510,6 +514,14 @@ find_word_found:
         ; push xt (code address)
         DPUSH rdi
         ; push either 1 (imm) or -1 (non-imm)
+        test dl, dl
+        jz find_return_non_immediate
+
+find_return_immediate:
+        DPUSH 1
+        ret
+
+find_return_non_immediate:
         DPUSH -1
         ret
 
@@ -523,6 +535,26 @@ find_word_found:
 .colon "EXECUTE", execute       ; ( xt -- )
         DPOP W
         call W                  ; what about a jump...?
+        ret
+
+.colon ";", semicolon, IMM
+        call here
+        call fetch
+        DPOP rdi
+        mov byte [rdi], 0xC3
+        inc rdi
+        mov [rdi], r12d   ; this is W as dword
+
+        ; update here
+        call here
+        call fetch
+        DPUSH 1
+        call plus
+        call here
+        call store
+        DPUSH 0
+        call state
+        call store
         ret
 
 .colon "INTERPRET", interpret
@@ -544,7 +576,66 @@ interpret_next_word:
         ; if not found, complain
         jz interpret_not_found
 
-        ; if found, execute it
+        ; if found, execute or compile it
+
+        ; check immediacy
+        ; W = 1   immediate
+        ; W = -1  non-immediate
+        test W, W
+        jns interpreting_or_immediate
+
+        ; check state
+        call state
+        call fetch
+        DPOP X
+        test X, X
+        jz interpreting_or_immediate
+
+interpret_compiling:
+        ;int3
+        DPOP W
+        ; compile a call to W (far call...? what kind of address do we have?)
+        ; it's probably a relative one... let's give it a try
+        ; we probably do want the short form don't we...
+
+        ; for the moment let's print the address
+        DPUSH 16
+        call base
+        call store
+        DPUSH W
+        call period
+        DPUSH 10
+        call base
+        call store
+
+        ; let's also try and compile a call
+        call here
+        call fetch
+        DPOP rdi
+        mov byte [rdi], 0xE8
+
+        ; obtain a 32 bit number to work with 32 bit signed
+        call here
+        call fetch
+        mov r13d, [ebp]
+        call drop
+
+        sub r12d, r13d
+        sub r12d, 5             ; additional offset from next instruction
+        mov [rdi+1], r12d       ; this is W as negative dword
+
+        ; update here
+        call here
+        call fetch
+        DPUSH 5
+        call plus
+        call here
+        call store
+
+        jmp interpret_next_word
+
+interpreting_or_immediate:
+        ; interpreting or it's an immediate, execute it
         DPOP W
         call W
         jmp interpret_next_word
@@ -639,6 +730,23 @@ quit_prompt:
         call here
         call store
         ret
+
+
+.colon "[", leftbracket, IMM
+        DPUSH 0
+        call state
+        call store
+        ret
+
+.colon "]", rightbracket, IMM
+        DPUSH 1
+        call state
+        call store
+        ret
+
+
+
+
 
 ;; maybe it's not the right name?
 dodoes:
@@ -754,14 +862,10 @@ dodoes:
         DPOP rdi
         rep movsb
 
-        mov byte [rdi], 0xC3    ; compile a RET (hackkkk)
-
-
         ; adjust HERE
         call here
         call fetch
-        ; DPUSH doesPreludeLen
-        DPUSH doesPreludeLen+1
+        DPUSH doesPreludeLen
         call plus
         call here
         call store
