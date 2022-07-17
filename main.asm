@@ -526,27 +526,40 @@ find_word_found:
         ret
 
 .colon "INTERPRET", interpret
+interpret_next_word:
+        call bl_
+        call word_
+
+        ; finished if there are no more words left (WORD returns "")
+        call dup
+        call cfetch
+        DPOP W
+        test W, W
+        jz interpret_end
+
         call find
         DPOP W
         test W, W
 
-        ; if found, execute it
-        ; jnz interpret_execute
-        jnz execute
-
         ; if not found, complain
+        jz interpret_not_found
+
+        ; if found, execute it
+        DPOP W
+        call W
+        jmp interpret_next_word
+
+interpret_not_found:
         call count
         call type
         DPUSH notFoundMsgStr
         DPUSH notFoundMsgLen
         call type
         call cr
-        ret
 
-; interpret_execute:
-;         DPOP W
-;         call W
-;         ret
+interpret_end:
+        call drop
+        ret
 
 ;; temporary test word
 .colon "NUM",num
@@ -605,19 +618,8 @@ period_done:
         call refill
         call drop               ; should do something with this flag(!)
 
-quit_next_word:
-        call bl_
-        call word_
-
-        ; finished if there are no more words left (WORD returns "")
-        call dup
-        call cfetch
-        DPOP W
-        test W, W
-        jz endquit
-
         call interpret
-        jmp quit_next_word
+        jmp quit
 
 endquit:
         DPUSH promptStr
