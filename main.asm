@@ -592,23 +592,8 @@ interpret_next_word:
         jz interpreting_or_immediate
 
 interpret_compiling:
-        ;int3
         DPOP W
-        ; compile a call to W (far call...? what kind of address do we have?)
-        ; it's probably a relative one... let's give it a try
-        ; we probably do want the short form don't we...
-
-        ; for the moment let's print the address
-        DPUSH 16
-        call base
-        call store
-        DPUSH W
-        call period
-        DPUSH 10
-        call base
-        call store
-
-        ; let's also try and compile a call
+        ; compile a near relative call, target address is in W
         call here
         call fetch
         DPOP rdi
@@ -620,9 +605,9 @@ interpret_compiling:
         mov r13d, [ebp]
         call drop
 
-        sub r12d, r13d
-        sub r12d, 5             ; additional offset from next instruction
-        mov [rdi+1], r12d       ; this is W as negative dword
+        sub r12d, r13d       ; this is W as a dword
+        sub r12d, 5          ; additional offset from next instruction
+        mov [rdi+1], r12d    ; this is W as negative dword
 
         ; update here
         call here
@@ -744,8 +729,55 @@ quit_prompt:
         call store
         ret
 
+.colon ":", colon
+        ; make an entry at HERE
+        ; first store the address on LATEST at HERE
+        call latest
+        call fetch
+        call here
+        call fetch
+        call store
 
+        call here               ; store here at latest
+        call fetch
+        call dup
+        call latest
+        call store
 
+        DPUSH CELLSIZE          ; update here
+        call plus
+        call here
+        call store
+
+        call bl_                ; get the word name
+        call word_              ; which will be on WORDBUFFER as a c-string
+
+        ; then flags+count followed by the name
+        call dup
+        call cfetch
+        DPUSH 1
+        call plus
+        DPOP rcx                ; we will copy count+1 bytes
+        DPOP rsi
+        DPUSH rcx               ; let's keep the size on the stack
+        call here
+        call fetch
+        DPOP rdi
+        rep movsb
+
+        ; update here (we left the count on the stack)
+        call here
+        call fetch
+        call plus               ; add HERE to the size we kept on the stack
+        call here
+        call store
+
+        ; finally switch to compile mode
+        DPUSH 1
+        call state
+        call store
+
+        ret
 
 
 ;; maybe it's not the right name?
