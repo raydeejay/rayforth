@@ -645,6 +645,10 @@ interpret_end:
         DPUSH 789
         ret
 
+.colon "0",zero
+        DPUSH 0
+        ret
+
 .colon "TWO",two
         DPUSH 2
         ret
