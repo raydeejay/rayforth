@@ -602,7 +602,7 @@ interpret_compiling:
         ; obtain a 32 bit number to work with 32 bit signed
         call here
         call fetch
-        mov r13d, [ebp]
+        mov r13d, [PSP]
         call drop
 
         sub r12d, r13d       ; this is W as a dword
