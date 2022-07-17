@@ -539,6 +539,18 @@ interpret_execute:
         DPUSH 789
         ret
 
+.colon "TWO",two
+        DPUSH 2
+        ret
+
+.colon "TEN",ten
+        DPUSH 10
+        ret
+
+.colon "SIXTEEN",sixteen
+        DPUSH 16
+        ret
+
 .colon ".", period              ; ( n -- )
         DPOP rax
         test rax, rax
