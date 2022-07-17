@@ -557,6 +557,77 @@ find_return_non_immediate:
         call store
         ret
 
+;; Forth 2012 says this ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
+;; For now we will have ( n1 c-addr1 u1 -- n2 c-addr2 u2 ) ?
+.colon ">NUMBER", tonumber
+        DPOP X
+        DPOP W
+
+        ; check for sign and prefixes first!!!!
+
+        ; bail out early if there are no digits to check
+        test X, X
+        jz tonumber_done
+
+        xor r10, r10
+        ; add each digit until we run out of (valid) digits
+tonumber_one_digit:
+        mov r10b, [W]
+
+        ; is Y between '0' and '9'?
+        cmp r10, '0'
+        jl tonumber_done
+
+        cmp r10, '9'
+        jg tonumber_maybe_letter
+
+        ; we have a digit, convert
+        sub r10, '0'
+
+        jmp tonumber_validate_digit
+
+tonumber_maybe_letter:
+        ; is Y between '0' and '9'?
+        cmp r10, 'A'
+        jl tonumber_done
+
+        cmp r10, 'Z'
+        jg tonumber_done
+
+        ; we have a digit, convert
+        sub r10, 'A'-10
+
+        jmp tonumber_validate_digit
+
+tonumber_validate_digit:
+        ; is the value under BASE? if not, it's an invalid digit
+        call base
+        call fetch
+        DPOP r11
+        cmp r10, r11
+        jge tonumber_done
+
+tonumber_convert:
+        ; first multiply n1 by BASE
+        call base
+        call fetch
+        call multiply
+
+        ; then add to the running total
+        DPUSH r10
+        call plus
+
+tonumber_next_digit:
+        inc W
+        dec X
+        jnz tonumber_one_digit
+
+tonumber_done:
+        DPUSH W
+        DPUSH X
+        ret
+
+
 .colon "INTERPRET", interpret
 interpret_next_word:
         call bl_
