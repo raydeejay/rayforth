@@ -150,58 +150,58 @@ SECTION mysection,EWR
 DICTIONARY:
 ;; primitives
 .colon "@",fetch
-        DPOP W
-        mov qword X, qword [W]
-        DPUSH X
+        DPOP r8
+        mov qword r9, qword [r8]
+        DPUSH r9
         ret
 
 .colon "!",store
-        DPOP W
-        DPOP X
-        mov qword [W], qword X
+        DPOP r8
+        DPOP r9
+        mov qword [r8], qword r9
         ret
 
 .colon "SP@", spFetch
-        mov W, PSP
-        DPUSH W
+        mov r8, PSP
+        DPUSH r8
         ret
 
 .colon "RP@", rpFetch
-        mov W, rsp
-        DPUSH W
+        mov r8, rsp
+        DPUSH r8
         ret
 
 .colon "0=", zeroEqual
-        DPOP W
-        test W, W
+        DPOP r8
+        test r8, r8
         pushf
-        pop W
-        shr W, 6+8
-        and W, 1
-        mov X, 0
-        sub X, W
-        DPUSH X
+        pop r8
+        shr r8, 6+8
+        and r8, 1
+        mov r9, 0
+        sub r9, r8
+        DPUSH r9
         ret
 
 .colon "+", plus
-        DPOP W
-        DPOP X
-        add W, X
-        DPUSH W
+        DPOP r8
+        DPOP r9
+        add r8, r9
+        DPUSH r8
         ret
 
 .colon "NAND", nand
-        DPOP W
-        DPOP X
-        and W, X
-        not W
-        DPUSH W
+        DPOP r8
+        DPOP r9
+        and r8, r9
+        not r8
+        DPUSH r8
         ret
 
 .colon "EXIT", exit
-        pop W
-        pop X
-        push W
+        pop r8
+        pop r9
+        push r8
         ret
 
 ;; ideally we should set the terminal to raw or something first
@@ -239,15 +239,15 @@ DICTIONARY:
         ret
 
 .colon "DUP", dup
-        mov W, [PSP]
-        DPUSH W
+        mov r8, [PSP]
+        DPUSH r8
         ret
 
 .colon "SWAP", swap
-        DPOP W
-        DPOP X
-        DPUSH W
-        DPUSH X
+        DPOP r8
+        DPOP r9
+        DPUSH r8
+        DPUSH r9
         ret
 
 .colon "DROP", drop
@@ -255,15 +255,15 @@ DICTIONARY:
         ret
 
 .colon "OVER", over
-        mov W, [PSP+CELLSIZE]
-        DPUSH W
+        mov r8, [PSP+CELLSIZE]
+        DPUSH r8
         ret
 
 .colon "*", multiply
-        DPOP W
-        DPOP X
-        imul W, X
-        DPUSH W
+        DPOP r8
+        DPOP r9
+        imul r8, r9
+        DPUSH r8
         ret
 
 .colon "CR", cr
@@ -279,9 +279,9 @@ DICTIONARY:
         ret
 
 .colon "C!", cstore
-        DPOP W
+        DPOP r8
         DPOP rbx                ; same here
-        mov [W], bl
+        mov [r8], bl
         ret
 
 .colon "BYE", bye
