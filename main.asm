@@ -684,23 +684,22 @@ dodoes:
         call here
         call store
 
-        ; compile a call to DODOES/DOCREATE/WHATEVER,
-        ; then update HERE
-
-        ; compile   move address of dodoes to 64 bit register (rsi)
-        ; 48 BE followed by 8 bytes of address
+        ; at runtime, move address of dodoes to 64 bit register (rsi)
+        ; compile 48 BE followed by 8 bytes of address
         call here
         call fetch
         DPOP rdi
         mov [rdi], byte 0x48
         mov [rdi+1], byte 0xBE
-        mov qword [rdi+2], dodoes ; hope this copies 8 bytes...
-        ; compile   call indirect with the register (rsi)
-        ; FF D6
+        mov qword [rdi+2], dodoes
+
+        ; at runtime,  call indirect with the register (rsi)
+        ; compile FF D6
         mov [rdi+10], byte 0xFF
         mov [rdi+11], byte 0xD6
 
-        DPUSH 12                ; update HERE
+        ; move HERE 12 bytes forward
+        DPUSH 2+8+2
         call here
         call fetch
         call plus
@@ -709,19 +708,61 @@ dodoes:
 
         ret
 
-.colon "DOES>", does
-        ; save the address of HERE
-        ; go to LATEST, skip over link and name, go to code
-        ; overwrite the call to DODOES with a call to HERE
-        ; compile code on HERE which:
-        ; pops top-of-return-stack and pushes to datastack
-        ; then the rest of code is compiled as usual
+.colon ">BODY", body            ; ( xt -- a-addr )
+        DPUSH 12
+        call plus
         ret
 
+.colon "DOES>", does
+        ; get LATEST, skip over link and name, go to code
+        call latest
+        call fetch
+        DPUSH CELLSIZE
+        call plus               ; skip over the link
+        call dup
+        call cfetch
+        DPUSH 1
+        call plus
+        call plus   ; skipped over the name
+
+        ; overwrite the call to DODOES with a call to HERE
+        ; at runtime, move address of current HERE to 64 bit register (rsi)
+        DPUSH 2
+        call plus
+        DPOP rdi
+        call here
+        call fetch
+        DPOP rsi
+        mov qword [rdi], rsi
+
+        ; compile code on HERE which:
+        ; pops top-of-return-stack and pushes to datastack
+        ; source code to compile to get the bytes...:
+        ; pop r8
+        ; sub rbp, 8
+        ; mov [rbp], r8
+        ; 41 58 48 83 ed 08 4c 89 45 00
+        mov rsi, doesPrelude
+        mov rcx, doesPreludeLen
+        call here
+        call fetch
+        DPOP rdi
+        rep movsb
+
+        mov byte [rdi], 0xC3    ; compile a RET (hackkkk)
 
 
+        ; adjust HERE
+        call here
+        call fetch
+        ; DPUSH doesPreludeLen
+        DPUSH doesPreludeLen+1
+        call plus
+        call here
+        call store
 
-
+        ; then the rest of code will be compiled as usual
+        ret
 
 
 end_of_builtins:
