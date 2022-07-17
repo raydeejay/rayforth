@@ -586,7 +586,7 @@ interpret_end:
         test rax, rax
         jz period_zero
 
-        xor W, W
+        xor r8, r8
 period_process_digit:
         xor rdx, rdx
         mov rbx, [val_base]
@@ -594,14 +594,14 @@ period_process_digit:
         add rdx, DIGITS            ; make a letter
         mov rdx, [rdx]
         DPUSH byte rdx
-        inc W
+        inc r8
         test rax, rax
         jnz period_process_digit
 
 period_emit_digit:
         ; no more digits, print them back from the stack
         call emit
-        dec W
+        dec r8
         jnz period_emit_digit
 
         jmp period_done
@@ -623,13 +623,13 @@ period_done:
 
         call interpret
         call quit_prompt
+        jmp quit
 
 quit_prompt:
         DPUSH promptStr
         DPUSH promptLen
         call type
-        call drop
-        jmp quit
+        ret
 
 .colon "ALLOT", allot           ; ( n -- )
         ; should clear the space too
