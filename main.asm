@@ -513,6 +513,17 @@ find_word_found:
         DPUSH -1
         ret
 
+.colon "'", tick                ; ( c"" -- xt )
+        call bl_
+        call word_
+        call find
+        call drop               ; nope, bad
+        ret
+
+.colon "EXECUTE", execute       ; ( xt -- )
+        DPOP W
+        call W                  ; what about a jump...?
+        ret
 
 .colon "INTERPRET", interpret
         call find
@@ -520,7 +531,8 @@ find_word_found:
         test W, W
 
         ; if found, execute it
-        jnz interpret_execute
+        ; jnz interpret_execute
+        jnz execute
 
         ; if not found, complain
         call count
@@ -531,10 +543,10 @@ find_word_found:
         call cr
         ret
 
-interpret_execute:
-        DPOP W
-        call W
-        ret
+; interpret_execute:
+;         DPOP W
+;         call W
+;         ret
 
 ;; temporary test word
 .colon "NUM",num
@@ -614,12 +626,20 @@ endquit:
         call drop
         jmp quit
 
+.colon "ALLOT", allot           ; ( n -- )
+        ; should clear the space too
+        call here
+        call fetch
+        call plus
+        call here
+        call store
+        ret
+
 ;; maybe it's not the right name?
 dodoes:
         pop W
         DPUSH W
         ret
-
 
 .colon "CREATE", create
         ; make an entry at HERE
