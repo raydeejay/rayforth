@@ -557,6 +557,9 @@ interpret_not_found:
         call type
         call cr
 
+        ; should clear the stack pointers... or is that QUIT's job?
+        ret
+
 interpret_end:
         call drop
         ret
@@ -619,9 +622,9 @@ period_done:
         call drop               ; should do something with this flag(!)
 
         call interpret
-        jmp quit
+        call quit_prompt
 
-endquit:
+quit_prompt:
         DPUSH promptStr
         DPUSH promptLen
         call type
