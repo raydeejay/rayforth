@@ -55,17 +55,19 @@ bits 64
 SECTION .data
 align 8
         helloStr db "RayForth v0", 10
-        helloLen equ $ -helloStr
+        helloLen equ $-helloStr
 
         keytestStr db "Press a key and it will be printed back", 10
-        keytestStrLen equ $ -keytestStr
+        keytestStrLen equ $-keytestStr
 
         notFoundMsgStr db " not found"
-        notFoundMsgLen equ $ -notFoundMsgStr
+        notFoundMsgLen equ $-notFoundMsgStr
 
         promptStr db " ok", 10
-        promptLen equ $ -promptStr
+        promptLen equ $-promptStr
 
+        doesPrelude db 0x41, 0x58, 0x48, 0x83, 0xED, 0x08, 0x4C, 0x89, 0x45, 0x0
+        doesPreludeLen equ $-doesPrelude
 
 ;; here's where these things go, apparently
 SECTION .bss
