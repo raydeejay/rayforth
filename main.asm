@@ -644,8 +644,8 @@ interpret_next_word:
         DPOP W
         test W, W
 
-        ; if not found, complain
-        jz interpret_not_found
+        ; if not found, it may be a number
+        jz interpret_maybe_number
 
         ; if found, execute or compile it
 
@@ -694,6 +694,26 @@ interpreting_or_immediate:
         ; interpreting or it's an immediate, execute it
         DPOP W
         call W
+        jmp interpret_next_word
+
+interpret_maybe_number:
+        ; >number takes (here) 0 address count
+        ; we swipe the 0 first because I haven't written ROT and -ROT yet
+        DPUSH 0
+        call swap
+        ; we can thrash the address because it's either a number or nothing
+        call count
+        call tonumber
+
+        ; if we got any characters left, it's not a number
+        DPOP W
+        test W, W
+        jnz interpret_not_found
+
+        ; if there are no chars left, we can drop the address
+        call drop
+
+        ; and we're left with the number, move along to the next word
         jmp interpret_next_word
 
 interpret_not_found:
