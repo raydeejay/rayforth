@@ -49,6 +49,7 @@ bits 64
         CELLSIZE equ 8
         STACKSIZE equ 64
         BUFFERSIZE equ 4096
+        DIGITS db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 ;; static data stuff
 SECTION .data
@@ -286,6 +287,7 @@ DICTIONARY:
         mov rbx, 0
         int 0x80
 
+.variable "BASE", base, 10      ; base is 10 by default
 .variable "STATE", state, 76
 .variable "HERE", here, 77
 .variable "LATEST", latest, 78
@@ -545,10 +547,11 @@ interpret_execute:
         xor W, W
 period_process_digit:
         xor rdx, rdx
-        mov rbx, 10
+        mov rbx, [val_base]
         div rbx
-        add rdx, '0'            ; make a letter
-        DPUSH rdx
+        add rdx, DIGITS            ; make a letter
+        mov rdx, [rdx]
+        DPUSH byte rdx
         inc W
         test rax, rax
         jnz period_process_digit
