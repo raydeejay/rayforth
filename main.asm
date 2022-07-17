@@ -600,6 +600,96 @@ endquit:
         call drop
         jmp quit
 
+;; maybe it's not the right name?
+dodoes:
+        pop W
+        DPUSH W
+        ret
+
+
+.colon "CREATE", create
+        ; make an entry at HERE
+        ; first store the address on LATEST at HERE
+        call latest
+        call fetch
+        call here
+        call fetch
+        call store
+
+        call here               ; store here at latest
+        call fetch
+        call dup
+        call latest
+        call store
+
+        DPUSH CELLSIZE          ; update here
+        call plus
+        call here
+        call store
+
+        call bl_                ; get the word name
+        call word_              ; which will be on WORDBUFFER as a c-string
+
+        ; then flags+count followed by the name
+        call dup
+        call cfetch
+        DPUSH 1
+        call plus
+        DPOP rcx                ; we will copy count+1 bytes
+        DPOP rsi
+        DPUSH rcx               ; let's keep the size on the stack
+        call here
+        call fetch
+        DPOP rdi
+        rep movsb
+
+        ; update here (we left the count on the stack)
+        call here
+        call fetch
+        call plus               ; add HERE to the size we kept on the stack
+        call here
+        call store
+
+        ; compile a call to DODOES/DOCREATE/WHATEVER,
+        ; then update HERE
+
+        ; compile   move address of dodoes to 64 bit register (rsi)
+        ; 48 BE followed by 8 bytes of address
+        call here
+        call fetch
+        DPOP rdi
+        mov [rdi], byte 0x48
+        mov [rdi+1], byte 0xBE
+        mov qword [rdi+2], dodoes ; hope this copies 8 bytes...
+        ; compile   call indirect with the register (rsi)
+        ; FF D6
+        mov [rdi+10], byte 0xFF
+        mov [rdi+11], byte 0xD6
+
+        DPUSH 12                ; update HERE
+        call here
+        call fetch
+        call plus
+        call here
+        call store
+
+        ret
+
+.colon "DOES>", does
+        ; save the address of HERE
+        ; go to LATEST, skip over link and name, go to code
+        ; overwrite the call to DODOES with a call to HERE
+        ; compile code on HERE which:
+        ; pops top-of-return-stack and pushes to datastack
+        ; then the rest of code is compiled as usual
+        ret
+
+
+
+
+
+
+
 end_of_builtins:
 ;; should I add a blob of uninitialised (or initialised) space here?
 
@@ -632,7 +722,7 @@ init:
         mov rsi, val_here
         mov qword [rsi], end_of_builtins
         mov rsi, val_latest
-        mov qword [rsi], quit_entry
+        mov qword [rsi], does_entry ; THIS HAS TO BE MANUALLY UPDATED...(!)
 
         ret
 
