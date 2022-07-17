@@ -773,6 +773,7 @@ dodoes:
 end_of_builtins:
 ;; should I add a blob of uninitialised (or initialised) space here?
 
+        resb 16384
 
 ;; the program code here
 SECTION .text
