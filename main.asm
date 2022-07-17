@@ -75,7 +75,7 @@ align 8
 
 ;; Parameter stack
         DATASTACK resb CELLSIZE*STACKSIZE
-        DATASTACKBOTTOM equ $ - CELLSIZE
+        DATASTACKBOTTOM equ $
 
 ;; Parameter Stack Macros
 %macro DPUSH 1
