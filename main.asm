@@ -290,7 +290,7 @@ DICTIONARY:
         int 0x80
 
 .variable "BASE", base, 10      ; base is 10 by default
-.variable "STATE", state, 76
+.variable "STATE", state, 0     ; 0 interpret, 1 compile
 .variable "HERE", here, 77
 .variable "LATEST", latest, 78
 .variable "TIB", TIB, TIBDATA
