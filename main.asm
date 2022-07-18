@@ -947,7 +947,7 @@ quit_prompt:
         ret
 
 .colon "ALLOT", allot           ; ( n -- )
-        ; should clear the space too
+        ; should clear the space too?
         call dp
         call fetch
         call plus
@@ -965,6 +965,26 @@ quit_prompt:
 .colon "]", rightbracket, IMM
         DPUSH 1
         call state
+        call store
+        ret
+
+.colon ",", comma
+        call here
+        call store
+        call here
+        DPUSH 8
+        call plus
+        call dp
+        call store
+        ret
+
+.colon "C,", c_comma
+        call here
+        call cstore
+        call here
+        DPUSH 1
+        call plus
+        call dp
         call store
         ret
 
