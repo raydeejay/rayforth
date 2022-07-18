@@ -295,10 +295,15 @@ DICTIONARY:
 
 .variable "BASE", base, 10      ; base is 10 by default
 .variable "STATE", state, 0     ; 0 interpret, 1 compile
-.variable "HERE", here, 77
-.variable "LATEST", latest, 78
+.variable "LATEST", latest, 0
 .variable "TIB", TIB, TIBDATA
 .variable ">IN", TIBIN, 0
+
+.variable "DP", dp, 0
+.colon "HERE", here
+        mov r8, [val_dp]
+        DPUSH r8
+        ret
 
 .colon "REFILL", refill
         mov rdi, TIBDATA
@@ -542,20 +547,12 @@ find_return_non_immediate:
         ret
 
 .colon ";", semicolon, IMM
-        call here
-        call fetch
-        DPOP rdi
-        mov byte [rdi], 0xC3
-        inc rdi
-        mov [rdi], r12d   ; this is W as dword
+        mov rsi, [val_dp]
+        mov byte [rsi], 0xC3
+        inc rsi
+        mov rdi, val_dp
+        mov [rdi], rsi
 
-        ; update here
-        call here
-        call fetch
-        DPUSH 1
-        call plus
-        call here
-        call store
         DPUSH 0
         call state
         call store
@@ -723,27 +720,27 @@ interpret_next_word:
 interpret_compiling:
         DPOP W
         ; compile a near relative call, target address is in W
-        call here
+        call dp
         call fetch
         DPOP rdi
         mov byte [rdi], 0xE8
 
         ; obtain a 32 bit number to work with 32 bit signed
-        call here
+        call dp
         call fetch
         mov r13d, [PSP]
         call drop
 
         sub r12d, r13d       ; this is W as a dword
         sub r12d, 5          ; additional offset from next instruction
-        mov [rdi+1], r12d    ; this is W as negative dword
+        mov [rdi+1], r12d    ; this is W as (now negative) dword
 
         ; update here
-        call here
+        call dp
         call fetch
         DPUSH 5
         call plus
-        call here
+        call dp
         call store
 
         jmp interpret_next_word
@@ -862,10 +859,10 @@ quit_prompt:
 
 .colon "ALLOT", allot           ; ( n -- )
         ; should clear the space too
-        call here
+        call dp
         call fetch
         call plus
-        call here
+        call dp
         call store
         ret
 
@@ -887,11 +884,11 @@ quit_prompt:
         ; first store the address on LATEST at HERE
         call latest
         call fetch
-        call here
+        call dp
         call fetch
         call store
 
-        call here               ; store here at latest
+        call dp               ; store here at latest
         call fetch
         call dup
         call latest
@@ -899,7 +896,7 @@ quit_prompt:
 
         DPUSH CELLSIZE          ; update here
         call plus
-        call here
+        call dp
         call store
 
         call bl_                ; get the word name
@@ -913,16 +910,16 @@ quit_prompt:
         DPOP rcx                ; we will copy count+1 bytes
         DPOP rsi
         DPUSH rcx               ; let's keep the size on the stack
-        call here
+        call dp
         call fetch
         DPOP rdi
         rep movsb
 
         ; update here (we left the count on the stack)
-        call here
+        call dp
         call fetch
         call plus               ; add HERE to the size we kept on the stack
-        call here
+        call dp
         call store
 
         ; finally switch to compile mode
@@ -944,11 +941,11 @@ dodoes:
         ; first store the address on LATEST at HERE
         call latest
         call fetch
-        call here
+        call dp
         call fetch
         call store
 
-        call here               ; store here at latest
+        call dp               ; store here at latest
         call fetch
         call dup
         call latest
@@ -956,7 +953,7 @@ dodoes:
 
         DPUSH CELLSIZE          ; update here
         call plus
-        call here
+        call dp
         call store
 
         call bl_                ; get the word name
@@ -970,21 +967,21 @@ dodoes:
         DPOP rcx                ; we will copy count+1 bytes
         DPOP rsi
         DPUSH rcx               ; let's keep the size on the stack
-        call here
+        call dp
         call fetch
         DPOP rdi
         rep movsb
 
         ; update here (we left the count on the stack)
-        call here
+        call dp
         call fetch
         call plus               ; add HERE to the size we kept on the stack
-        call here
+        call dp
         call store
 
         ; at runtime, move address of dodoes to 64 bit register (rsi)
         ; compile 48 BE followed by 8 bytes of address
-        call here
+        call dp
         call fetch
         DPOP rdi
         mov [rdi], byte 0x48
@@ -998,10 +995,10 @@ dodoes:
 
         ; move HERE 12 bytes forward
         DPUSH 2+8+2
-        call here
+        call dp
         call fetch
         call plus
-        call here
+        call dp
         call store
 
         ret
@@ -1028,7 +1025,7 @@ dodoes:
         DPUSH 2
         call plus
         DPOP rdi
-        call here
+        call dp
         call fetch
         DPOP rsi
         mov qword [rdi], rsi
@@ -1038,17 +1035,17 @@ dodoes:
         ; source code to compile to get the bytes...:
         mov rsi, doesPrelude
         mov rcx, doesPreludeLen
-        call here
+        call dp
         call fetch
         DPOP rdi
         rep movsb
 
         ; adjust HERE
-        call here
+        call dp
         call fetch
         DPUSH doesPreludeLen
         call plus
-        call here
+        call dp
         call store
 
         ; then the rest of code will be compiled as usual
@@ -1085,7 +1082,7 @@ init:
 
         mov PSP, DATASTACKBOTTOM
 
-        mov rsi, val_here
+        mov rsi, val_dp
         mov qword [rsi], end_of_builtins
         mov rsi, val_latest
         mov qword [rsi], does_entry ; THIS HAS TO BE MANUALLY UPDATED...(!)
