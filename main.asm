@@ -573,8 +573,9 @@ find_return_non_immediate:
         call fetch
         call swap
 
+        xor r10, r10            ; clear the 64-bit register to load 8 bits
+
         ; check for sign and prefixes first!!!!
-        xor r10, r10
         mov r10b, [W]
         ; is it '? character, read until next '
         ; maybe we ignore this one for now...
@@ -591,6 +592,7 @@ find_return_non_immediate:
         cmp r10, '%'
         je tonumber_binary
 
+        ; the number is in the current base
         jmp tonumber_begin
 
 tonumber_hex:
@@ -621,7 +623,18 @@ tonumber_binary:
         ; is it -? negative
 
 tonumber_begin:
-        xor r10, r10
+        mov r10b, [W]
+        mov rdx, 1
+        ; check if it's a negative
+        cmp r10, '-'
+        je tonumber_negative
+        jmp tonumber_one_digit
+
+tonumber_negative:
+        mov rdx, -1
+        inc W
+        dec X
+
         ; add each digit until we run out of (valid) digits
 tonumber_one_digit:
         mov r10b, [W]
@@ -678,6 +691,8 @@ tonumber_done:
         call swap
         call base
         call store
+        DPUSH rdx
+        call multiply
         DPUSH W
         DPUSH X
         ret
@@ -808,11 +823,29 @@ interpret_end:
         ret
 
 .colon ".", period              ; ( n -- )
+        ; if 0, just print 0 and exit
         DPOP rax
         test rax, rax
         jz period_zero
 
+        ; display negatives somehow... only if BASE is 10
+        cmp qword [val_base], 10
+        jne period_begin_process
+
+        ; print a '-' only if it's a negative
+        test rax, rax
+        jns period_begin_process
+
+        xchg rax, r8
+        DPUSH '-'
+        call emit
+        xchg rax, r8
+        ; then negate then number and print it normally
+        neg rax
+
+period_begin_process:
         xor r8, r8
+
 period_process_digit:
         xor rdx, rdx
         mov rbx, [val_base]
