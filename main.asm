@@ -450,15 +450,15 @@ found_closing_delimiter:
 .colon "FIND", find             ; ( c-addr -- c-addr 0 | xt 1 | xt -1 )
         ; store the address of the source string on r10
         mov r10, [PSP]
-        ; store the address of the link on r11
+        ; store the address of the link on Y
         call latest
         call fetch
-        DPOP r11
+        DPOP Y
 
 find_setup:
         ; load rsi and rdi
         mov rsi, r10
-        mov rdi, r11
+        mov rdi, Y
 
         ; first move over the link, to the count+name
         add rdi, CELLSIZE
@@ -479,8 +479,8 @@ find_check_lengths:
 
         ; if not the same, next word
         ; follow the link
-        mov r11, [r11]
-        mov rdi, r11
+        mov Y, [Y]
+        mov rdi, Y
 
         ; if the link is 0, not found
         test rdi, rdi
@@ -502,8 +502,8 @@ find_check_names:
         je find_word_found
 
         ; if they're different move to the next link
-        mov r11, [r11]
-        mov rdi, r11
+        mov Y, [Y]
+        mov rdi, Y
 
         ; if the link is 0, not found
         test rdi, rdi
@@ -655,8 +655,8 @@ tonumber_validate_digit:
         ; is the value under BASE? if not, it's an invalid digit
         call base
         call fetch
-        DPOP r11
-        cmp r10, r11
+        DPOP Y
+        cmp r10, Y
         jge tonumber_done
 
 tonumber_convert:
