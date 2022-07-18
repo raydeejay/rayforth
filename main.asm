@@ -804,26 +804,37 @@ interpret_maybe_number:
         test rcx, rcx
         jz interpret_next_word
 
-        ; compile code on HERE which:
-        ; pushes into the stack the value which is NOW on the stack
-        mov rsi, literalCode
-        mov rcx, literalCodeLen
-        mov rdi, [val_dp]
-        rep movsb
-
-        ; now we patch the number in
-        mov rdi, [val_dp]
-        add rdi, literalCodeAddressOffset
-        DPOP r8
-        mov qword [rdi], r8
-
-        ; adjust HERE
+        ; compile a call to LIT
+        ; compute the relative address from here to LIT
+        mov W, lit
+        ; compile a near relative call, target address is in W
         call dp
         call fetch
-        DPUSH literalCodeLen
+        DPOP rdi
+        mov byte [rdi], 0xE8
+
+        ; obtain a 32 bit number to work with 32 bit signed
+        call dp
+        call fetch
+        mov r13d, [PSP]
+        call drop
+
+        sub r12d, r13d       ; this is W as a dword
+        sub r12d, 5          ; additional offset from next instruction
+        mov [rdi+1], r12d    ; this is W as (now negative) dword
+
+        ; compile the number immediately after
+        DPOP r8
+        mov qword [rdi+5], r8
+
+        ; update here
+        call dp
+        call fetch
+        DPUSH 5+CELLSIZE
         call plus
         call dp
         call store
+
 
         ; and we're left with the number, move along to the next word
         jmp interpret_next_word
@@ -1008,11 +1019,25 @@ quit_prompt:
         ret
 
 
-;; maybe it's not the right name?
-dodoes:
-        pop W
-        DPUSH W
+;; piece of code called for a CREATEd word
+;; push into datastack the address immediately after the call
+;; and return to the caller of the caller
+created:
+        pop r8
+        DPUSH r8
         ret
+
+;; piece of code called for a compiled literal
+;; push into datastack the 64 bit number immediately after the call
+;; and return to the address after it
+lit:
+        pop r8
+        mov r9, [r8]
+        DPUSH r9
+        add r8, CELLSIZE
+        push r8
+        ret
+
 
 .colon "CREATE", create
         ; make an entry at HERE
@@ -1057,14 +1082,14 @@ dodoes:
         call dp
         call store
 
-        ; at runtime, move address of dodoes to 64 bit register (rsi)
+        ; at runtime, move address of created to 64 bit register (rsi)
         ; compile 48 BE followed by 8 bytes of address
         call dp
         call fetch
         DPOP rdi
         mov [rdi], byte 0x48
         mov [rdi+1], byte 0xBE
-        mov qword [rdi+2], dodoes
+        mov qword [rdi+2], created
 
         ; at runtime,  call indirect with the register (rsi)
         ; compile FF D6
@@ -1098,7 +1123,7 @@ dodoes:
         call plus
         call plus   ; skipped over the name
 
-        ; overwrite the call to DODOES with a call to HERE
+        ; overwrite the call to CREATED with a call to HERE
         ; at runtime, move address of current HERE to 64 bit register (rsi)
         DPUSH 2
         call plus
