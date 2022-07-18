@@ -73,6 +73,15 @@ align 8
         doesPrelude db 0x41, 0x58, 0x48, 0x83, 0xED, 0x08, 0x4C, 0x89, 0x45, 0x0
         doesPreludeLen equ $-doesPrelude
 
+        ; mov rax, 0x1122334455667788
+        ; sub rbp, 8
+        ; mov [rbp], rax
+        literalCode db 0x48, 0xb8
+        literalCodeAddressOffset equ $-literalCode
+        db 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11
+        db 0x48, 0x83,  0xed, 0x08, 0x48, 0x89, 0x45, 0x00
+        literalCodeLen equ $-literalCode
+
 ;; here's where these things go, apparently
 SECTION .bss
 align 8
@@ -782,6 +791,33 @@ interpret_maybe_number:
 
         ; if there are no chars left, we can drop the address
         call drop
+
+        ; IF WE'RE COMPILING WE MUST COMPILE THE NUMBER(!!!!!!)
+        ; but if interpreting, we're done
+        mov rcx, [val_state]
+        test rcx, rcx
+        jz interpret_next_word
+
+        ; compile code on HERE which:
+        ; pushes into the stack the value which is NOW on the stack
+        mov rsi, literalCode
+        mov rcx, literalCodeLen
+        mov rdi, [val_dp]
+        rep movsb
+
+        ; now we patch the number in
+        mov rdi, [val_dp]
+        add rdi, literalCodeAddressOffset
+        DPOP r8
+        mov qword [rdi], r8
+
+        ; adjust HERE
+        call dp
+        call fetch
+        DPUSH literalCodeLen
+        call plus
+        call dp
+        call store
 
         ; and we're left with the number, move along to the next word
         jmp interpret_next_word
