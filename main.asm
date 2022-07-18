@@ -567,12 +567,63 @@ find_return_non_immediate:
         DPOP X
         DPOP W
 
-        ; check for sign and prefixes first!!!!
-
         ; bail out early if there are no digits to check
         test X, X
         jz tonumber_done
 
+        ; always save BASE under TOS (the accumulator at this point)
+        call base
+        call fetch
+        call swap
+
+        ; check for sign and prefixes first!!!!
+        xor r10, r10
+        mov r10b, [W]
+        ; is it '? character, read until next '
+        ; maybe we ignore this one for now...
+
+        ; is it $? hex
+        cmp r10, '$'
+        je tonumber_hex
+
+        ; is it #? decimal
+        cmp r10, '#'
+        je tonumber_decimal
+
+        ; is it %? binary
+        cmp r10, '%'
+        je tonumber_binary
+
+        jmp tonumber_begin
+
+tonumber_hex:
+        DPUSH 16
+        call base
+        call store
+        inc W
+        dec X
+        jmp tonumber_begin
+
+tonumber_decimal:
+        DPUSH 10
+        call base
+        call store
+        inc W
+        dec X
+        jmp tonumber_begin
+
+tonumber_binary:
+        DPUSH 2
+        call base
+        call store
+        inc W
+        dec X
+        jmp tonumber_begin
+
+        ; and for the last three...
+        ; is it -? negative
+
+tonumber_begin:
         xor r10, r10
         ; add each digit until we run out of (valid) digits
 tonumber_one_digit:
@@ -627,6 +678,9 @@ tonumber_next_digit:
         jnz tonumber_one_digit
 
 tonumber_done:
+        call swap
+        call base
+        call store
         DPUSH W
         DPUSH X
         ret
