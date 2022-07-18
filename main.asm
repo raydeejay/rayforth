@@ -776,12 +776,15 @@ interpreting_or_immediate:
         jmp interpret_next_word
 
 interpret_maybe_number:
-        ; >number takes (here) 0 address count
+        ; keep the original address on the stack?
+        call dup
+
         ; we swipe the 0 first because I haven't written ROT and -ROT yet
         DPUSH 0
         call swap
-        ; we can thrash the address because it's either a number or nothing
+        ; we can thrash the address copy
         call count
+        ; >number takes (0 address count)
         call tonumber
 
         ; if we got any characters left, it's not a number
@@ -790,6 +793,9 @@ interpret_maybe_number:
         jnz interpret_not_found
 
         ; if there are no chars left, we can drop the address
+        call drop
+        ; we can also drop the original address
+        call swap
         call drop
 
         ; IF WE'RE COMPILING WE MUST COMPILE THE NUMBER(!!!!!!)
@@ -823,6 +829,8 @@ interpret_maybe_number:
         jmp interpret_next_word
 
 interpret_not_found:
+        call drop
+        call drop
         call count
         call type
         DPUSH notFoundMsgStr
@@ -831,6 +839,7 @@ interpret_not_found:
         call cr
 
         ; should clear the stack pointers... or is that QUIT's job?
+        ;jmp interpret_end
         ret
 
 interpret_end:
