@@ -203,6 +203,13 @@ DICTIONARY:
         DPUSH r8
         ret
 
+.colon "-", minus
+        DPOP r8
+        DPOP r9
+        sub r9, r8
+        DPUSH r8
+        ret
+
 .colon "NAND", nand
         DPOP r8
         DPOP r9
