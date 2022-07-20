@@ -1014,6 +1014,113 @@ quit_prompt:
         call store
         ret
 
+.colon "IMMEDIATE", immediate
+        ; find last entry
+        call latest
+        call fetch
+        ; get to the length
+        DPUSH CELLSIZE
+        call plus
+        call dup
+        ; enable MSB
+        call cfetch
+        DPOP r8
+        or r8, IMM
+        DPUSH r8
+        call swap
+        call cstore
+        ret
+
+.colon "BREAK", break
+        int3
+        ret
+
+.colon "POSTPONE", postpone, IMM
+        ; parse input stream and find xt
+        call bl_
+        call word_
+        call dup
+        call cfetch
+        DPOP W
+        test W, W
+        jz postpone_end        ; no more input
+                                ; probably not the right thing to do
+                                ; we should abort? don't have it yet xD
+
+        call find
+        DPOP W
+        test W, W
+
+        ; if not found, we should abort, don't have it yet xD
+        jz postpone_end
+
+        ; compile relative call
+        DPOP W
+
+        ; compile a near relative call, target address is in W
+        call here
+        DPOP rdi
+        mov byte [rdi], 0xE8
+
+        ; obtain a 32 bit number to work with 32 bit signed
+        call here
+        mov r13d, [PSP]
+        call drop
+
+        sub r12d, r13d       ; this is W as a dword
+        sub r12d, 5          ; additional offset from next instruction
+        mov [rdi+1], r12d    ; this is W as (now negative) dword
+
+        ; update here
+        call here
+        DPUSH 5
+        call plus
+        call dp
+        call store
+        ret
+
+postpone_end:
+        call drop
+        ret
+
+.colon "COMPILE,", compilecomma ; ( xt -- ) compiles a call...? execute? what?
+        ; take XT from the stack (?)
+        ; compile relative call
+        DPOP W
+
+        ; compile a near relative call, target address is in W
+        call here
+        DPOP rdi
+        mov byte [rdi], 0xE8
+
+        ; obtain a 32 bit number to work with 32 bit signed
+        call here
+        mov r13d, [PSP]
+        call drop
+
+        sub r12d, r13d       ; this is W as a dword
+        sub r12d, 5          ; additional offset from next instruction
+        mov [rdi+1], r12d    ; this is W as (now negative) dword
+
+        ; update here
+        call here
+        DPUSH 5
+        call plus
+        call dp
+        call store
+        ret
+
+
+.colon "REL", compute_relative_address ; ( src dst -- signed-32-bit-offset )
+        DPOP W
+        DPOP X
+        add X, 5
+        sub r12d, r13d       ; these are W and X as dwords
+        DPUSH W
+
+        ret
+
+
 .colon ":", colon
         ; make an entry at HERE
         ; first store the address on LATEST at HERE
