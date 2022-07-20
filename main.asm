@@ -1235,24 +1235,27 @@ created:
         call dp
         call store
 
-        ; at runtime, move address of created to 64 bit register (rsi)
-        ; compile 48 BE followed by 8 bytes of address
+        ; compile a near relative call, target address is in W
+        mov W, created
         call dp
         call fetch
         DPOP rdi
-        mov [rdi], byte 0x48
-        mov [rdi+1], byte 0xBE
-        mov qword [rdi+2], created
+        mov byte [rdi], 0xE8
 
-        ; at runtime,  call indirect with the register (rsi)
-        ; compile FF D6
-        mov [rdi+10], byte 0xFF
-        mov [rdi+11], byte 0xD6
-
-        ; move HERE 12 bytes forward
-        DPUSH 2+8+2
+        ; obtain a 32 bit number to work with 32 bit signed
         call dp
         call fetch
+        mov r13d, [PSP]
+        call drop
+
+        sub r12d, r13d       ; this is W as a dword
+        sub r12d, 5          ; additional offset from next instruction
+        mov [rdi+1], r12d    ; this is W as (now negative) dword
+
+        ; update here
+        call dp
+        call fetch
+        DPUSH 5
         call plus
         call dp
         call store
