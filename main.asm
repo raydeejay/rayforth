@@ -975,11 +975,30 @@ quit_prompt:
         call store
         ret
 
+.colon "R>", torstack
+        pop r8
+        pop r9
+        push r8
+        DPUSH r9
+        ret
+
+.colon "R@", rfetch
+        mov r8, [PSP]
+        DPUSH r8
+        ret
+
+.colon ">R", fromrstack
+        DPOP r8
+        pop r9
+        push r8
+        push r9
+        ret
+
 .colon ",", comma
         call here
         call store
         call here
-        DPUSH 8
+        DPUSH CELLSIZE
         call plus
         call dp
         call store
