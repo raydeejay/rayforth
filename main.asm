@@ -1192,6 +1192,19 @@ created:
         ret
 
 
+.colon "(0branch)", zerobranch
+        pop r9
+        DPOP r8
+        test r8, r8
+        jz zerobranch_forward
+        add r9, CELLSIZE
+        push r9
+        ret
+zerobranch_forward:
+        push qword [r9]
+        ret
+
+
 .colon "CREATE", create
         ; make an entry at HERE
         ; first store the address on LATEST at HERE
