@@ -1076,7 +1076,7 @@ created:
 ;; piece of code called for a compiled literal
 ;; push into datastack the 64 bit number immediately after the call
 ;; and return to the address after it
-lit:
+.colon "LIT", lit
         pop r8
         mov r9, [r8]
         DPUSH r9
