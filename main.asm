@@ -187,13 +187,12 @@ DICTIONARY:
 .colon "0=", zeroEqual
         DPOP r8
         test r8, r8
-        pushf
-        pop r8
-        shr r8, 6+8
-        and r8, 1
-        mov r9, 0
-        sub r9, r8
-        DPUSH r9
+        jz zeroEqualTrue
+zeroEqualFalse:
+        DPUSH 0
+        ret
+zeroEqualTrue:
+        DPUSH -1
         ret
 
 .colon "+", plus
