@@ -207,7 +207,7 @@ DICTIONARY:
         DPOP r8
         DPOP r9
         sub r9, r8
-        DPUSH r8
+        DPUSH r9
         ret
 
 .colon "NAND", nand
