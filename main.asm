@@ -321,6 +321,13 @@ DICTIONARY:
         DPUSH r8
         ret
 
+.colon "(", leftparen
+        DPUSH ')'
+        call word_
+        call drop
+        call drop
+        ret
+
 .colon "REFILL", refill
         mov rdi, TIBDATA
         mov rcx, BUFFERSIZE
