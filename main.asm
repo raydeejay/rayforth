@@ -253,10 +253,7 @@ DICTIONARY:
         int 0x80
         ret
 
-.colon "SQUARE", square
-        call dup
-        call multiply
-        ret
+;; stack manipulation
 
 .colon "DUP", dup
         mov r8, [PSP]
