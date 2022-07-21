@@ -220,8 +220,6 @@ DICTIONARY:
 
 .colon "EXIT", exit
         pop r8
-        pop r9
-        push r8
         ret
 
 ;; User-level applications use as integer registers for passing the
