@@ -670,6 +670,9 @@ find_return_non_immediate:
         call word_
         call find
         call drop               ; nope, bad
+        DPUSH lit
+        call compilecomma
+        call comma
         ret
 
 .colon "EXECUTE", execute       ; ( xt -- )
@@ -1329,6 +1332,30 @@ zerobranch_forward:
         push qword [r9]
         ret
 
+.colon "(for)", innerfor
+        ; slide the loop counter on the stack to second on return stack
+        DPOP r8
+        pop r9
+        push r8
+        push r9
+        ret
+
+.colon "(next)", innernext
+        ; decrease the loop counter by 1
+        dec qword [rsp+8]
+        ret
+
+.colon "(endfor)", endfor
+        ; remove the loop counter from second on return stack
+        pop r8
+        pop r9
+        push r8
+        ret
+
+.colon "I", i
+        mov r8, [rsp+8]
+        DPUSH r8
+        ret
 
 .colon "CREATE", create
         ; make an entry at HERE
