@@ -209,6 +209,39 @@ zeroEqualTrue:
         DPUSH r9
         ret
 
+.colon "*", multiply
+        DPOP r8
+        DPOP r9
+        imul r8, r9
+        DPUSH r8
+        ret
+;; Signed divide RDX:RAX by r/m64, with result stored in
+;; RAX ← Quotient, RDX ← Remainder.
+.colon "/mod", dividemod
+        xor rdx, rdx
+        DPOP r8
+        DPOP rax
+        idiv r8
+        DPUSH rdx
+        DPUSH rax
+        ret
+
+.colon "/", divide
+        xor rdx, rdx
+        DPOP r8
+        DPOP rax
+        idiv r8
+        DPUSH rax
+        ret
+
+.colon "mod", mod
+        xor rdx, rdx
+        DPOP r8
+        DPOP rax
+        idiv r8
+        DPUSH rdx
+        ret
+
 .colon "NAND", nand
         DPOP r8
         DPOP r9
@@ -347,13 +380,6 @@ zeroEqualTrue:
 
 .colon "OVER", over
         mov r8, [PSP+CELLSIZE]
-        DPUSH r8
-        ret
-
-.colon "*", multiply
-        DPOP r8
-        DPOP r9
-        imul r8, r9
         DPUSH r8
         ret
 
