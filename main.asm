@@ -561,6 +561,13 @@ find_return_non_immediate:
         call drop               ; nope, bad
         ret
 
+.colon "[']", tickimm, IMM                ; ( c"" -- xt )
+        call bl_
+        call word_
+        call find
+        call drop               ; nope, bad
+        ret
+
 .colon "EXECUTE", execute       ; ( xt -- )
         DPOP W
         call W                  ; what about a jump...?
