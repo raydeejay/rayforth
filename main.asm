@@ -224,14 +224,90 @@ DICTIONARY:
         push r8
         ret
 
-;; ideally we should set the terminal to raw or something first
-.colon "KEY", key
-        sub PSP, 4
-        mov rax, 3
-        mov rbx, 1
-        mov rcx, PSP
-        mov rdx, 1
-        int 0x80
+;; User-level applications use as integer registers for passing the
+;; sequence %rdi, %rsi, %rdx, %rcx, %r8 and %r9. The kernel interface
+;; uses %rdi, %rsi, %rdx, %r10, %r8 and %r9.
+
+;; A system-call is done via the syscall instruction. The kernel
+;; destroys registers %rcx and %r11.
+
+;; The number of the syscall has to be passed in register %rax.
+
+;; System-calls are limited to six arguments,no argument is passed
+;; directly on the stack.
+
+;; Returning from the syscall, register %rax contains the result of
+;; the system-call. A value in the range between -4095 and -1
+;; indicates an error, it is -errno.
+
+;; Only values of class INTEGER or class MEMORY are passed to the
+;; kernel.
+
+
+.colon "SYSCALL/1", colonsyscall1 ; ( arg1 int -- result )
+        DPOP rax
+        DPOP rdi
+        syscall
+        DPUSH rax
+        ret
+
+.colon "SYSCALL/2", colonsyscall2
+        DPOP rax
+        DPOP rdi
+        DPOP rsi
+        syscall
+        DPUSH rax
+        ret
+
+.colon "SYSCALL/3", colonsyscall3
+        DPOP rax
+        DPOP rdi
+        DPOP rsi
+        DPOP rdx
+        syscall
+        DPUSH rax
+        ret
+
+.colon "SYSCALL/4", colonsyscall4
+        DPOP rax
+        DPOP rdi
+        DPOP rsi
+        DPOP rdx
+        DPOP r10
+        syscall
+        DPUSH rax
+        ret
+
+.colon "SYSCALL/5", colonsyscall5
+        DPOP rax
+        DPOP rdi
+        DPOP rsi
+        DPOP rdx
+        DPOP r10
+        DPOP r8
+        syscall
+        DPUSH rax
+        ret
+
+.colon "SYSCALL/6", colonsyscall6
+        DPOP rax
+        DPOP rdi
+        DPOP rsi
+        DPOP rdx
+        DPOP r10
+        DPOP r8
+        DPOP r9
+        syscall
+        DPUSH rax
+        ret
+
+;; TYPE
+.colon "TYPE", type ; ( addr n -- )
+        call swap
+        DPUSH 1
+        DPUSH 1
+        call colonsyscall3
+        call drop
         ret
 
 .colon "EMIT", emit
@@ -239,18 +315,19 @@ DICTIONARY:
         DPUSH Y
         DPUSH 1
         call type
-        add PSP, CELLSIZE
+        call drop
         ret
 
-;; end of SectorForth primitives, start of mine
-
-;; TYPE
-.colon "TYPE", type
-        mov rax, 4
-        mov rbx, 1
-        DPOP rdx
-        DPOP rcx
-        int 0x80
+.colon "KEY", key
+;; ideally we should set the terminal to raw or something first
+        DPUSH 0
+        mov r8, PSP
+        DPUSH 1
+        DPUSH r8
+        DPUSH 1
+        DPUSH 0
+        call colonsyscall3
+        call drop
         ret
 
 ;; stack manipulation
@@ -302,9 +379,12 @@ DICTIONARY:
         ret
 
 .colon "BYE", bye
-        mov rax, 1
-        mov rbx, 0
-        int 0x80
+        DPUSH 0
+        DPUSH 60
+        call colonsyscall1
+        ; not that we ever get here...
+        call drop
+        ret
 
 .variable "BASE", base, 10      ; base is 10 by default
 .variable "STATE", state, 0     ; 0 interpret, 1 compile
@@ -331,11 +411,12 @@ DICTIONARY:
         mov al, ' '
         rep stosb
 
-        mov rax, 3
-        mov rbx, 1
-        mov rcx, TIBDATA
-        mov rdx, BUFFERSIZE
-        int 0x80
+        DPUSH BUFFERSIZE
+        DPUSH TIBDATA
+        DPUSH 1
+        DPUSH 0
+        call colonsyscall3
+        DPOP rax
 
         ; rax holds size or -errno
         test rax, rax
@@ -912,7 +993,11 @@ interpret_end:
 
         xchg rax, r8
         DPUSH '-'
+        push rax
+        push r8
         call emit
+        pop r8
+        pop rax
         xchg rax, r8
         ; then negate then number and print it normally
         neg rax
@@ -933,7 +1018,9 @@ period_process_digit:
 
 period_emit_digit:
         ; no more digits, print them back from the stack
+        push r8
         call emit
+        pop r8
         dec r8
         jnz period_emit_digit
 
