@@ -1116,12 +1116,11 @@ postpone_end:
 
 
 .colon "REL", compute_relative_address ; ( src dst -- signed-32-bit-offset )
-        DPOP W
-        DPOP X
-        add X, 5
-        sub r12d, r13d       ; these are W and X as dwords
-        DPUSH W
-
+        DPOP r8
+        DPOP r9
+        add r9, 5
+        sub r8d, r9d       ; these are W and X as dwords
+        DPUSH r8
         ret
 
 
