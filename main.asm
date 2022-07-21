@@ -1298,6 +1298,11 @@ zerobranch_forward:
         push qword [r9]
         ret
 
+.colon "(branch)", branch
+        pop r9
+        push qword [r9]
+        ret
+
 
 .colon "CREATE", create
         ; make an entry at HERE
