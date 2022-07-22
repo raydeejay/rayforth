@@ -425,7 +425,6 @@ zeroEqualTrue:
         DPUSH ')'
         call word_
         call drop
-        call drop
         ret
 
 .colon "REFILL", refill
