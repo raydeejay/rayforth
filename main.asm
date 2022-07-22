@@ -399,25 +399,57 @@ zeroEqualTrue:
 
 ;; stack manipulation
 
-.colon "DUP", dup
+.colon "DUP", dup               ; ( a -- a a )
         mov r8, [PSP]
         DPUSH r8
         ret
 
-.colon "SWAP", swap
+.colon "SWAP", swap             ; ( a b -- b a )
         DPOP r8
         DPOP r9
         DPUSH r8
         DPUSH r9
         ret
 
-.colon "DROP", drop
+.colon "DROP", drop             ; ( a -- )
         add PSP, CELLSIZE
         ret
 
-.colon "OVER", over
+.colon "OVER", over             ; ( a b -- a b a )
         mov r8, [PSP+CELLSIZE]
         DPUSH r8
+        ret
+
+.colon "NIP", nip               ; ( a b -- b )
+        mov r8, [PSP]
+        add PSP, CELLSIZE
+        mov [PSP], r8
+        ret
+
+.colon "TUCK", tuck             ; ( a b -- b a b )
+        DPOP r8
+        DPOP r9
+        DPUSH r8
+        DPUSH r9
+        DPUSH r8
+        ret
+
+.colon "ROT", rot               ; ( a b c -- b c a )
+        DPOP r8
+        DPOP r9
+        DPOP r10
+        DPUSH r9
+        DPUSH r10
+        DPUSH r8
+        ret
+
+.colon "-ROT", minusrot         ; ( a b c -- c a b )
+        DPOP r8
+        DPOP r9
+        DPOP r10
+        DPUSH r8
+        DPUSH r10
+        DPUSH r9
         ret
 
 .colon "CR", cr
