@@ -217,7 +217,7 @@ zeroEqualTrue:
         ret
 ;; Signed divide RDX:RAX by r/m64, with result stored in
 ;; RAX ← Quotient, RDX ← Remainder.
-.colon "/mod", dividemod
+.colon "/MOD", dividemod
         xor rdx, rdx
         DPOP r8
         DPOP rax
@@ -234,7 +234,7 @@ zeroEqualTrue:
         DPUSH rax
         ret
 
-.colon "mod", mod
+.colon "MOD", mod
         xor rdx, rdx
         DPOP r8
         DPOP rax
