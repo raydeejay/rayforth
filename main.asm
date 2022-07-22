@@ -242,11 +242,48 @@ zeroEqualTrue:
         DPUSH rdx
         ret
 
-.colon "NAND", nand
+.colon "NAND", nand_
         DPOP r8
         DPOP r9
         and r8, r9
         not r8
+        DPUSH r8
+        ret
+
+.colon "NOR", nor_
+        DPOP r8
+        DPOP r9
+        or r8, r9
+        not r8
+        DPUSH r8
+        ret
+
+.colon "XNOR", xnor_
+        DPOP r8
+        DPOP r9
+        xor r8, r9
+        not r8
+        DPUSH r8
+        ret
+
+.colon "AND", and_
+        DPOP r8
+        DPOP r9
+        and r8, r9
+        DPUSH r8
+        ret
+
+.colon "OR", or_
+        DPOP r8
+        DPOP r9
+        or r8, r9
+        DPUSH r8
+        ret
+
+.colon "XOR", xor_
+        DPOP r8
+        DPOP r9
+        xor r8, r9
         DPUSH r8
         ret
 
