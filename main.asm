@@ -1207,24 +1207,28 @@ postpone_end:
         call drop
         ret
 
-.colon "COMPILE,", compilecomma ; ( xt -- ) compiles a call...? execute? what?
-        ; take XT from the stack (?)
+.colon "COMPILE@", compileat ; ( xt addr -- ) compiles a call...
         ; compile relative call
+        DPOP rdi
         DPOP W
 
-        ; compile a near relative call, target address is in W
-        call here
-        DPOP rdi
-        mov byte [rdi], 0xE8
-
         ; obtain a 32 bit number to work with 32 bit signed
-        call here
+        DPUSH rdi
         mov r13d, [PSP]
         call drop
 
         sub r12d, r13d       ; this is W as a dword
         sub r12d, 5          ; additional offset from next instruction
-        mov [rdi+1], r12d    ; this is W as (now negative) dword
+
+        ; compile a near relative call, target address is in W
+        mov byte [rdi], 0xE8
+        mov [rdi+1], r12d    ; this is W as (now negative, or not) dword
+
+        ret
+
+.colon "COMPILE,", compilecomma ; ( xt -- ) compiles a call...? execute? what?
+        call here
+        call compileat
 
         ; update here
         call here
