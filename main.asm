@@ -1234,16 +1234,6 @@ postpone_end:
         call store
         ret
 
-
-.colon "REL", compute_relative_address ; ( src dst -- signed-32-bit-offset )
-        DPOP r8
-        DPOP r9
-        add r9, 5
-        sub r8d, r9d       ; these are W and X as dwords
-        DPUSH r8
-        ret
-
-
 .colon ":", colon
         ; make an entry at HERE
         ; first store the address on LATEST at HERE
@@ -1427,55 +1417,6 @@ zerobranch_forward:
 
         ret
 
-.colon ">BODY", body            ; ( xt -- a-addr )
-        DPUSH 12
-        call plus
-        ret
-
-.colon "DOES>", does
-        ; get LATEST, skip over link and name, go to code
-        call latest
-        call fetch
-        DPUSH CELLSIZE
-        call plus               ; skip over the link
-        call dup
-        call cfetch
-        DPUSH 1
-        call plus
-        call plus   ; skipped over the name
-
-        ; overwrite the call to CREATED with a call to HERE
-        ; at runtime, move address of current HERE to 64 bit register (rsi)
-        DPUSH 2
-        call plus
-        DPOP rdi
-        call dp
-        call fetch
-        DPOP rsi
-        mov qword [rdi], rsi
-
-        ; compile code on HERE which:
-        ; pops top-of-return-stack and pushes to datastack
-        ; source code to compile to get the bytes...:
-        mov rsi, doesPrelude
-        mov rcx, doesPreludeLen
-        call dp
-        call fetch
-        DPOP rdi
-        rep movsb
-
-        ; adjust HERE
-        call dp
-        call fetch
-        DPUSH doesPreludeLen
-        call plus
-        call dp
-        call store
-
-        ; then the rest of code will be compiled as usual
-        ret
-
-
 end_of_builtins:
 ;; should I add a blob of uninitialised (or initialised) space here?
 
@@ -1509,7 +1450,7 @@ init:
         mov rsi, val_dp
         mov qword [rsi], end_of_builtins
         mov rsi, val_latest
-        mov qword [rsi], does_entry ; THIS HAS TO BE MANUALLY UPDATED...(!)
+        mov qword [rsi], create_entry ; THIS HAS TO BE MANUALLY UPDATED...(!)
 
         ret
 
