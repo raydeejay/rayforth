@@ -1501,7 +1501,7 @@ align 8
 global _start
 
 ;; perform various initialization stuff
-init:
+warm:
         mov rdi, PADDATA
         mov rcx, BUFFERSIZE
         mov al, ' '
@@ -1519,6 +1519,10 @@ init:
 
         mov PSP, DATASTACKBOTTOM
 
+        ret
+
+init:
+        call warm
         mov rsi, val_dp
         mov qword [rsi], end_of_builtins
         mov rsi, val_latest
