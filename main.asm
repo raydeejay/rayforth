@@ -1175,7 +1175,7 @@ quit_prompt:
         ret
 
 .colon "R@", rfetch
-        mov r8, [PSP]
+        mov r8, [rsp]
         DPUSH r8
         ret
 
