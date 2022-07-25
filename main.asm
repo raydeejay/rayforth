@@ -401,17 +401,11 @@ zeroEqualTrue:
 ;; stack manipulation
 
 .colon "DUP", dup               ; ( a -- a a )
-        ;mov r8, [PSP]
-        ;DPUSH r8
         sub PSP, 8
         mov [PSP], TOS
         ret
 
 .colon "SWAP", swap             ; ( a b -- b a )
-        ;DPOP r8
-        ;DPOP r9
-        ;DPUSH r8
-        ;DPUSH r9
         xchg [PSP], TOS
         ret
 
@@ -421,42 +415,34 @@ zeroEqualTrue:
         ret
 
 .colon "OVER", over             ; ( a b -- a b a )
-        ;mov r8, [PSP+CELLSIZE]
-        ;DPUSH r8
         mov r8, [PSP]
         DPUSH r8
         ret
 
 .colon "NIP", nip               ; ( a b -- b )
-        ;mov r8, [PSP]
         add PSP, CELLSIZE
-        ;mov [PSP], r8
         ret
 
-.colon "TUCK", tuck             ; ( a b -- b a b )
-        DPOP r8
-        DPOP r9
-        DPUSH r8
-        DPUSH r9
-        DPUSH r8
+.colon "TUCK", tuck             ; ( a b c -- b a b )
+        ; a | b
+        xchg [PSP], TOS         ; b | a
+        sub PSP, CELLSIZE       ; b ? | a
+        mov [PSP], TOS          ; b a | a
+        mov TOS, [PSP+CELLSIZE] ; b a | b
         ret
 
 .colon "ROT", rot               ; ( a b c -- b c a )
         DPOP r8
-        DPOP r9
-        DPOP r10
-        DPUSH r9
-        DPUSH r10
-        DPUSH r8
+        call swap
+        sub PSP, CELLSIZE
+        mov [PSP], r8
         ret
 
 .colon "-ROT", minusrot         ; ( a b c -- c a b )
-        DPOP r8
-        DPOP r9
-        DPOP r10
+        mov r8, [PSP]
+        add PSP, 8
+        xchg [PSP], TOS
         DPUSH r8
-        DPUSH r10
-        DPUSH r9
         ret
 
 .colon "CR", cr
