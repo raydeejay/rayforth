@@ -235,6 +235,28 @@ greaterthan_yes:
         mov TOS, -1
         jmp greaterthan_done
 
+.colon "U<", ulesserthan
+        xor r8, r8
+        xchg r8, TOS
+        cmp r8, [PSP]
+        ja ulesserthan_yes
+ulesserthan_done:
+        ret
+ulesserthan_yes:
+        mov TOS, -1
+        jmp ulesserthan_done
+
+.colon "U>", ugreaterthan
+        xor r8, r8
+        xchg r8, TOS
+        cmp r8, [PSP]
+        jb ugreaterthan_yes
+ugreaterthan_done:
+        ret
+ugreaterthan_yes:
+        mov TOS, -1
+        jmp ugreaterthan_done
+
 .colon "+", plus
         DPOP r8
         DPOP r9
