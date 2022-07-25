@@ -94,9 +94,11 @@ align 8
 %macro DPUSH 1
         sub PSP, CELLSIZE
         mov qword [PSP], qword %1
+        xchg TOS, [PSP]
 %endmacro
 
 %macro DPOP 1
+        xchg TOS, [PSP]
         mov qword %1, qword [PSP]
         add PSP, CELLSIZE
 %endmacro
@@ -399,30 +401,36 @@ zeroEqualTrue:
 ;; stack manipulation
 
 .colon "DUP", dup               ; ( a -- a a )
-        mov r8, [PSP]
-        DPUSH r8
+        ;mov r8, [PSP]
+        ;DPUSH r8
+        sub PSP, 8
+        mov [PSP], TOS
         ret
 
 .colon "SWAP", swap             ; ( a b -- b a )
-        DPOP r8
-        DPOP r9
-        DPUSH r8
-        DPUSH r9
+        ;DPOP r8
+        ;DPOP r9
+        ;DPUSH r8
+        ;DPUSH r9
+        xchg [PSP], TOS
         ret
 
 .colon "DROP", drop             ; ( a -- )
+        xchg [PSP], TOS
         add PSP, CELLSIZE
         ret
 
 .colon "OVER", over             ; ( a b -- a b a )
-        mov r8, [PSP+CELLSIZE]
+        ;mov r8, [PSP+CELLSIZE]
+        ;DPUSH r8
+        mov r8, [PSP]
         DPUSH r8
         ret
 
 .colon "NIP", nip               ; ( a b -- b )
-        mov r8, [PSP]
+        ;mov r8, [PSP]
         add PSP, CELLSIZE
-        mov [PSP], r8
+        ;mov [PSP], r8
         ret
 
 .colon "TUCK", tuck             ; ( a b -- b a b )
