@@ -50,6 +50,8 @@ bits 64
         STACKSIZE equ 64
         BUFFERSIZE equ 4096
         DIGITS db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        TRUE equ -1
+        FALSE equ 0
 
 ;; static data stuff
 SECTION .data
@@ -164,6 +166,9 @@ WORDBUFFER:
 SECTION mysection,EWR
 DICTIONARY:
 ;; primitives
+.constant "TRUE", true, -1
+.constant "FALSE", false, 0
+
 .colon "@",fetch
         DPOP r8
         mov qword r9, qword [r8]
