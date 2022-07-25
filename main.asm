@@ -191,6 +191,16 @@ zeroEqualTrue:
         mov TOS, -1
         ret
 
+.colon "0<>", zeroNotEqual
+        test TOS, TOS
+        jnz zeroNotEqualTrue
+zeroNotEqualFalse:
+        mov TOS, 0
+        ret
+zeroNotEqualTrue:
+        mov TOS, -1
+        ret
+
 .colon "=", equal
         DPOP r8
         DPOP r9
