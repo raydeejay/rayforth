@@ -192,6 +192,18 @@ zeroEqualTrue:
         DPUSH -1
         ret
 
+.colon "=", equal
+        DPOP r8
+        DPOP r9
+        cmp r8, r9
+        je equalTrue
+equalFalse:
+        DPUSH 0
+        ret
+equalTrue:
+        DPUSH -1
+        ret
+
 .colon "+", plus
         DPOP r8
         DPOP r9
