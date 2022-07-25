@@ -559,6 +559,13 @@ ugreaterthanorequal_yes:
         DPUSH r8
         ret
 
+.colon "PICK", pick
+        mov r8, TOS
+        shl r8, 3               ; cell size is 8
+        add r8, PSP
+        mov TOS, [r8]
+        ret
+
 .colon "CR", cr
         DPUSH 10
         call emit
