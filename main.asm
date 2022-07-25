@@ -174,11 +174,6 @@ DICTIONARY:
         mov qword [r8], qword r9
         ret
 
-.colon "SP@", spFetch
-        mov r8, PSP
-        DPUSH r8
-        ret
-
 .colon "RP@", rpFetch
         mov r8, rsp
         DPUSH r8
@@ -556,7 +551,12 @@ refill_error:
         ; the address of the potential word is on TOS
         DPOP rsi
         ; the delimiter is on TOS now, we'll just point rdi to it
-        mov rdi, PSP
+        ; mov rdi, PSP
+        ; ok so what if we move it to the return stack instead...?
+        DPOP r8
+        push r8
+        mov rdi, rsp
+
 
 word_skip_delimiters:
         cmpsb
@@ -577,7 +577,8 @@ tibdata_was_empty:
         mov qword [rsi], qword 0
 
         ; clean up
-        call drop
+        ; call drop
+        pop r8
         DPUSH WORDBUFFER
 
         ret
@@ -633,7 +634,8 @@ found_closing_delimiter:
         rep movsb
 
         ; clear the delimiter off the stack
-        call drop
+        ;call drop
+        pop r8
 
         ; return the address of the parsed word
         DPUSH WORDBUFFER
