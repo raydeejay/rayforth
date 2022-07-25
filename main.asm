@@ -373,23 +373,27 @@ zeroEqualTrue:
         ret
 
 .colon "EMIT", emit
-        mov Y, PSP
-        DPUSH Y
+        ; instead store the char on the return stack
+        DPOP r8
+        push r8
+        DPUSH rsp
         DPUSH 1
         call type
-        call drop
+        ; drop the char on the return stack
+        pop r8
         ret
 
 .colon "KEY", key
 ;; ideally we should set the terminal to raw or something first
-        DPUSH 0
-        mov r8, PSP
+        push 0
         DPUSH 1
-        DPUSH r8
+        DPUSH rsp
         DPUSH 1
         DPUSH 0
         call colonsyscall3
         call drop
+        pop r8
+        DPUSH r8
         ret
 
 ;; stack manipulation
