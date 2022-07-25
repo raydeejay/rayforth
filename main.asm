@@ -235,6 +235,28 @@ greaterthan_yes:
         mov TOS, -1
         jmp greaterthan_done
 
+.colon "<=", lesserthanorequal
+        xor r8, r8
+        xchg r8, TOS
+        cmp r8, [PSP]
+        jge lesserthanorequal_yes
+lesserthanorequal_done:
+        ret
+lesserthanorequal_yes:
+        mov TOS, -1
+        jmp lesserthanorequal_done
+
+.colon ">=", greaterthanorequal
+        xor r8, r8
+        xchg r8, TOS
+        cmp r8, [PSP]
+        jle greaterthanorequal_yes
+greaterthanorequal_done:
+        ret
+greaterthanorequal_yes:
+        mov TOS, -1
+        jmp greaterthanorequal_done
+
 .colon "U<", ulesserthan
         xor r8, r8
         xchg r8, TOS
@@ -256,6 +278,28 @@ ugreaterthan_done:
 ugreaterthan_yes:
         mov TOS, -1
         jmp ugreaterthan_done
+
+.colon "U<=", ulesserthanorequal
+        xor r8, r8
+        xchg r8, TOS
+        cmp r8, [PSP]
+        jae ulesserthanorequal_yes
+ulesserthanorequal_done:
+        ret
+ulesserthanorequal_yes:
+        mov TOS, -1
+        jmp ulesserthanorequal_done
+
+.colon "U>=", ugreaterthanorequal
+        xor r8, r8
+        xchg r8, TOS
+        cmp r8, [PSP]
+        jbe ugreaterthanorequal_yes
+ugreaterthanorequal_done:
+        ret
+ugreaterthanorequal_yes:
+        mov TOS, -1
+        jmp ugreaterthanorequal_done
 
 .colon "+", plus
         DPOP r8
