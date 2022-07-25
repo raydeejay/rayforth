@@ -592,6 +592,12 @@ ugreaterthanorequal_yes:
         DPUSH r8
         ret
 
+.colon "UNUSED", unused
+        mov r8, end_of_dictionary
+        sub r8, [val_dp]
+        DPUSH r8
+        ret
+
 .colon "(", leftparen
         DPUSH ')'
         call word_
@@ -1609,6 +1615,7 @@ end_of_builtins:
 ;; should I add a blob of uninitialised (or initialised) space here?
 
         resb 16384
+end_of_dictionary:
 
 ;; the program code here
 SECTION .text
