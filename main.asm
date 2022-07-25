@@ -182,14 +182,13 @@ DICTIONARY:
         ret
 
 .colon "0=", zeroEqual
-        DPOP r8
-        test r8, r8
+        test TOS, TOS
         jz zeroEqualTrue
 zeroEqualFalse:
-        DPUSH 0
+        mov TOS, 0
         ret
 zeroEqualTrue:
-        DPUSH -1
+        mov TOS, -1
         ret
 
 .colon "=", equal
