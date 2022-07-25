@@ -641,7 +641,9 @@ found_closing_delimiter:
 
 .colon "FIND", find             ; ( c-addr -- c-addr 0 | xt 1 | xt -1 )
         ; store the address of the source string on r10
-        mov r10, [PSP]
+        ; mov r10, [PSP]
+        DPOP r10
+        DPUSH r10
         ; store the address of the link on Y
         call latest
         call fetch
@@ -945,8 +947,9 @@ interpret_compiling:
         ; obtain a 32 bit number to work with 32 bit signed
         call dp
         call fetch
-        mov r13d, [PSP]
-        call drop
+        ;mov r13d, [PSP]
+        ;call drop
+        DPOP X
 
         sub r12d, r13d       ; this is W as a dword
         sub r12d, 5          ; additional offset from next instruction
@@ -1009,8 +1012,9 @@ interpret_maybe_number:
         ; obtain a 32 bit number to work with 32 bit signed
         call dp
         call fetch
-        mov r13d, [PSP]
-        call drop
+        ;mov r13d, [PSP]
+        ;call drop
+        DPOP X
 
         sub r12d, r13d       ; this is W as a dword
         sub r12d, 5          ; additional offset from next instruction
@@ -1256,8 +1260,9 @@ quit_prompt:
 
         ; obtain a 32 bit number to work with 32 bit signed
         call here
-        mov r13d, [PSP]
-        call drop
+        ;mov r13d, [PSP]
+        ;call drop
+        DPOP X
 
         sub r12d, r13d       ; this is W as a dword
         sub r12d, 5          ; additional offset from next instruction
@@ -1282,8 +1287,9 @@ postpone_end:
 
         ; obtain a 32 bit number to work with 32 bit signed
         DPUSH rdi
-        mov r13d, [PSP]
-        call drop
+        ;mov r13d, [PSP]
+        ;call drop
+        DPOP X
 
         sub r12d, r13d       ; this is W as a dword
         sub r12d, 5          ; additional offset from next instruction
@@ -1472,8 +1478,9 @@ zerobranch_forward:
         ; obtain a 32 bit number to work with 32 bit signed
         call dp
         call fetch
-        mov r13d, [PSP]
-        call drop
+        ;mov r13d, [PSP]
+        ;call drop
+        DPOP X
 
         sub r12d, r13d       ; this is W as a dword
         sub r12d, 5          ; additional offset from next instruction
