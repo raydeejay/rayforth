@@ -576,7 +576,7 @@ ugreaterthanorequal_yes:
         shl r9, 3               ; cell size is 8
         add r9, PSP
         mov TOS, [r9]
-        ; now copy stack and move pointer up
+        ; now copy stack down (or up...?)
         mov rdi, r9
         sub r9, CELLSIZE
         mov rsi, r9
@@ -586,7 +586,7 @@ ugreaterthanorequal_yes:
         std
         rep movsq
         cld
-        ; finally adjust the stack pointer
+        ; finally adjust the stack pointer to get rid of previous TOS
         add PSP, CELLSIZE
         ret
 
