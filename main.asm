@@ -576,7 +576,7 @@ ugreaterthanorequal_yes:
         shl r9, 3               ; cell size is 8
         add r9, PSP
         mov TOS, [r9]
-        ; now copy stack and move pointer down
+        ; now copy stack and move pointer up
         mov rdi, r9
         sub r9, CELLSIZE
         mov rsi, r9
