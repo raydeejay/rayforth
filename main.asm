@@ -566,6 +566,30 @@ ugreaterthanorequal_yes:
         mov TOS, [r8]
         ret
 
+.colon "ROLL", roll
+        ; keeping the index (or something) on TOS, we can rotate the
+        ; elements and then advance PSP at the end to get rid of the
+        ; second-on-stack, getting the correct value on TOS and on
+        ; second-on-stack
+        xchg r8, TOS
+        mov r9, r8
+        shl r9, 3               ; cell size is 8
+        add r9, PSP
+        mov TOS, [r9]
+        ; now copy stack and move pointer down
+        mov rdi, r9
+        sub r9, CELLSIZE
+        mov rsi, r9
+        mov rcx, r8
+        ; IN REVERSE, stack grows downwards, so we want to start
+        ; copying from the end, and decrement the pointers!!
+        std
+        rep movsq
+        cld
+        ; finally adjust the stack pointer
+        add PSP, CELLSIZE
+        ret
+
 .colon "CR", cr
         DPUSH 10
         call emit
