@@ -485,8 +485,7 @@ ugreaterthanorequal_yes:
         DPUSH 1
         DPUSH 1
         call colonsyscall3
-        call drop
-        ret
+        jmp drop
 
 .colon "EMIT", emit
         ; instead store the char on the return stack
@@ -592,8 +591,7 @@ ugreaterthanorequal_yes:
 
 .colon "CR", cr
         DPUSH 10
-        call emit
-        ret
+        jmp emit
 
 .colon "C@", cfetch
         DPOP W
@@ -613,8 +611,7 @@ ugreaterthanorequal_yes:
         DPUSH 60
         call colonsyscall1
         ; not that we ever get here...
-        call drop
-        ret
+        jmp drop
 
 .variable "BASE", base, 10      ; base is 10 by default
 .variable "STATE", state, 0     ; 0 interpret, 1 compile
@@ -637,8 +634,7 @@ ugreaterthanorequal_yes:
 .colon "(", leftparen
         DPUSH ')'
         call word_
-        call drop
-        ret
+        jmp drop
 
 .colon "REFILL", refill
         mov rdi, TIBDATA
@@ -686,8 +682,7 @@ refill_error:
         call swap
         DPUSH 1
         call plus
-        call swap
-        ret
+        jmp swap
 
 .colon "WORD", word_
         call TIB
@@ -883,8 +878,7 @@ find_return_non_immediate:
         call bl_
         call word_
         call find
-        call drop               ; nope, bad
-        ret
+        jmp drop               ; nope, bad
 
 .colon "[']", tickimm, IMM                ; ( c"" -- xt )
         call bl_
@@ -893,13 +887,11 @@ find_return_non_immediate:
         call drop               ; nope, bad
         DPUSH lit
         call compilecomma
-        call comma
-        ret
+        jmp comma
 
 .colon "EXECUTE", execute       ; ( xt -- )
         DPOP W
-        call W                  ; what about a jump...?
-        ret
+        jmp W                  ; what about a jump...?
 
 .colon ";", semicolon, IMM
         mov rsi, [val_dp]
@@ -910,8 +902,7 @@ find_return_non_immediate:
 
         DPUSH 0
         call state
-        call store
-        ret
+        jmp store
 
 ;; Forth 2012 says this ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
 ;; For now we will have ( n1 c-addr1 u1 -- n2 c-addr2 u2 ) ?
@@ -1202,8 +1193,7 @@ interpret_not_found:
         ret
 
 interpret_end:
-        call drop
-        ret
+        jmp drop
 
 ;; temporary test word
 .colon "NUM",num
@@ -1281,8 +1271,7 @@ period_zero:
 
 period_done:
         DPUSH ' '
-        call emit
-        ret
+        jmp emit
 
 
 .colon "QUIT", quit
@@ -1297,8 +1286,7 @@ period_done:
 quit_prompt:
         DPUSH promptStr
         DPUSH promptLen
-        call type
-        ret
+        jmp type
 
 .colon "ALLOT", allot           ; ( n -- )
         ; should clear the space too?
@@ -1306,21 +1294,18 @@ quit_prompt:
         call fetch
         call plus
         call dp
-        call store
-        ret
+        jmp store
 
 
 .colon "[", leftbracket, IMM
         DPUSH 0
         call state
-        call store
-        ret
+        jmp store
 
 .colon "]", rightbracket, IMM
         DPUSH 1
         call state
-        call store
-        ret
+        jmp store
 
 .colon "R>", torstack
         pop r8
@@ -1348,8 +1333,7 @@ quit_prompt:
         DPUSH CELLSIZE
         call plus
         call dp
-        call store
-        ret
+        jmp store
 
 .colon "C,", c_comma
         call here
@@ -1358,8 +1342,7 @@ quit_prompt:
         DPUSH 1
         call plus
         call dp
-        call store
-        ret
+        jmp store
 
 .colon "IMMEDIATE", immediate
         ; find last entry
@@ -1375,8 +1358,7 @@ quit_prompt:
         or r8, IMM
         DPUSH r8
         call swap
-        call cstore
-        ret
+        jmp cstore
 
 .colon "BREAK", break
         int3
@@ -1424,12 +1406,10 @@ quit_prompt:
         DPUSH 5
         call plus
         call dp
-        call store
-        ret
+        jmp store
 
 postpone_end:
-        call drop
-        ret
+        jmp drop
 
 .colon "COMPILE@", compileat ; ( xt addr -- ) compiles a call...
         ; compile relative call
@@ -1460,8 +1440,7 @@ postpone_end:
         DPUSH 5
         call plus
         call dp
-        call store
-        ret
+        jmp store
 
 .colon ":", colon
         ; make an entry at HERE
@@ -1509,9 +1488,7 @@ postpone_end:
         ; finally switch to compile mode
         DPUSH 1
         call state
-        call store
-
-        ret
+        jmp store
 
 
 ;; piece of code called for a CREATEd word
@@ -1643,9 +1620,7 @@ zerobranch_forward:
         DPUSH 5
         call plus
         call dp
-        call store
-
-        ret
+        jmp store
 
 end_of_builtins:
 ;; should I add a blob of uninitialised (or initialised) space here?
@@ -1696,14 +1671,12 @@ display:
         DPUSH PADDATA
         DPUSH BUFFERSIZE
         call type
-        call cr
-        ret
+        jmp cr
 
 hello:
         DPUSH helloStr
         DPUSH helloLen
-        call type
-        ret
+        jmp type
 
 ;; Inner interpreter stuff
 ;; do we even have one? :-/
