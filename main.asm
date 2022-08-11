@@ -1576,6 +1576,118 @@ zerobranch_forward:
         DPUSH r8
         ret
 
+
+;; allocation:
+
+;; just allocate 8 extra bytes, stick the length in the beginning,
+;; return the pointer after the length to the user
+
+;; freeing:
+;; subtract 8 bytes from the address, get the length from there
+
+;; resizing:
+;; subtract 8 bytes from the address, store the new length there
+
+;; dynamic memory - mmap() allocates 4Kb pages (so it should always be aligned...?)
+.colon "ALLOCATE", allocate     ; ( u -- addr ior )
+        ; off fd flags prot len address 9 SYSCALL/6
+        DPOP W                  ; save the length in W
+        add W, CELLSIZE
+        DPUSH 0
+        DPUSH -1                ; -1 for compatibility
+        DPUSH MMAP_FLAGS
+        DPUSH MMAP_PROTECTION
+        DPUSH W
+        DPUSH 0
+        DPUSH 9                 ; mmap
+        call colonsyscall6
+
+        ; if TOS is -1, return ( invalid-addr -1 ) straight ahead
+        call dup
+        test TOS, TOS
+        js allocate_end
+
+        ; otherwise store the length at the address, then increment
+        ; address by CELLSIZE
+        mov r8, [PSP]
+        mov [r8], W
+        add r8, CELLSIZE
+        mov [PSP], r8
+        ; and replace TOS with a 0
+        xor TOS, TOS
+allocate_end:
+        ret
+
+.colon "FREE", free     ; ( addr -- ior )
+        ; len address 11 SYSCALL/2
+        sub TOS, CELLSIZE
+        mov r9, [TOS]
+        DPUSH r9
+        call swap
+        DPUSH 11                ; munmap
+        call colonsyscall2
+        ret
+
+.colon "RESIZE", resize     ; ( addr u -- addr' ior )
+        ; new_addr flags new_len old_len addr 25 syscall/5
+        DPOP W                  ; length
+        DPOP X                  ; address
+        DPUSH 0
+        DPUSH 0                 ; or maybe MREMAP_MAYMOVE?
+        add W, CELLSIZE         ; account for storing the size
+        DPUSH W                 ; new length
+        sub X, CELLSIZE
+        mov r9, [X]
+        DPUSH r9                ; old length
+        DPUSH X                 ; address
+        DPUSH 25                ; mremap
+        call colonsyscall5
+
+        ; if TOS is -1, return ( invalid-addr -1 ) straight ahead
+        call dup
+        test TOS, TOS
+        js resize_end
+
+        ; otherwise store the length at the address, then increment
+        ; address by CELLSIZE
+        mov r8, [PSP]
+        mov [r8], W
+        add r8, CELLSIZE
+        mov [PSP], r8
+        ; and replace TOS with a 0
+        xor TOS, TOS
+resize_end:
+        ret
+
+.colon "CMOVE", cmove           ; ( addr1 addr2 u -- )
+        DPOP rcx
+        DPOP rdi
+        DPOP rsi
+        test rcx, rcx
+        jz cmove_end
+        rep movsb
+cmove_end:
+        ret
+
+.colon "FILL", fill             ; ( addr u c -- )
+        DPOP rax
+        DPOP rcx
+        DPOP rdi
+        test rcx, rcx
+        jz fill_end
+        rep stosb
+fill_end:
+        ret
+
+.colon "ERASE", erase             ; ( addr u -- )
+        DPUSH 0
+        call fill
+        ret
+
+
+
+; last builtin word, for now, this is important because init uses this
+; word to set up LATEST
 .colon "CREATE", create
         ; make an entry at HERE
         ; first store the address on LATEST at HERE
