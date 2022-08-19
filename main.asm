@@ -169,6 +169,11 @@ DICTIONARY:
 .constant "TRUE", true, -1
 .constant "FALSE", false, 0
 
+.colon "EXIT", exit
+        pop r8
+        ret
+
+
 .colon "@",fetch
         DPOP r8
         mov qword r9, qword [r8]
@@ -181,10 +186,44 @@ DICTIONARY:
         mov qword [r8], qword r9
         ret
 
+.colon "C@", cfetch
+        DPOP W
+        xor rbx, rbx
+        mov bl, [W]            ; hmmm... we do want to read a single char here
+        DPUSH rbx
+        ret
+
+.colon "C!", cstore
+        DPOP r8
+        DPOP rbx                ; same here
+        mov [r8], bl
+        ret
+
+
 .colon "RP@", rpFetch
         mov r8, rsp
         DPUSH r8
         ret
+
+.colon "R@", rfetch
+        mov r8, [rsp]
+        DPUSH r8
+        ret
+
+.colon "R>", torstack
+        pop r8
+        pop r9
+        push r8
+        DPUSH r9
+        ret
+
+.colon ">R", fromrstack
+        DPOP r8
+        pop r9
+        push r8
+        push r9
+        ret
+
 
 .colon "0=", zeroEqual
         test TOS, TOS
@@ -306,101 +345,83 @@ ugreaterthanorequal_yes:
         mov TOS, -1
         jmp ugreaterthanorequal_done
 
+
 .colon "+", plus
-        DPOP r8
-        DPOP r9
-        add r8, r9
-        DPUSH r8
+        add TOS, [PSP]
+        add PSP, 8
         ret
 
 .colon "-", minus
-        DPOP r8
-        DPOP r9
-        sub r9, r8
-        DPUSH r9
+        xchg TOS, [PSP]
+        sub TOS, [PSP]
+        add PSP, 8
         ret
 
-.colon "*", multiply
-        DPOP r8
-        DPOP r9
-        imul r8, r9
-        DPUSH r8
+.colon "*", multiply            ; bit broken but works for reasonable numbers... xD
+        imul TOS, [PSP]
+        add PSP, 8
         ret
+
 ;; Signed divide RDX:RAX by r/m64, with result stored in
 ;; RAX ← Quotient, RDX ← Remainder.
 .colon "/MOD", dividemod
         xor rdx, rdx
-        DPOP r8
-        DPOP rax
-        idiv r8
-        DPUSH rdx
-        DPUSH rax
+        mov rax, [PSP]
+        idiv TOS
+        mov [PSP], rax
+        mov TOS, rdx
         ret
 
 .colon "/", divide
         xor rdx, rdx
-        DPOP r8
-        DPOP rax
-        idiv r8
-        DPUSH rax
+        mov rax, [PSP]
+        idiv TOS
+        mov TOS, rax
+        add PSP, CELLSIZE
         ret
 
 .colon "MOD", mod
         xor rdx, rdx
-        DPOP r8
-        DPOP rax
-        idiv r8
-        DPUSH rdx
+        mov rax, [PSP]
+        idiv TOS
+        mov TOS, rdx
+        add PSP, CELLSIZE
         ret
 
+
 .colon "NAND", nand_
-        DPOP r8
-        DPOP r9
-        and r8, r9
-        not r8
-        DPUSH r8
+        and TOS, [PSP]
+        not TOS
+        add PSP, CELLSIZE
         ret
 
 .colon "NOR", nor_
-        DPOP r8
-        DPOP r9
-        or r8, r9
-        not r8
-        DPUSH r8
+        or TOS, [PSP]
+        not TOS
+        add PSP, CELLSIZE
         ret
 
 .colon "XNOR", xnor_
-        DPOP r8
-        DPOP r9
-        xor r8, r9
-        not r8
-        DPUSH r8
+        xor TOS, [PSP]
+        not TOS
+        add PSP, CELLSIZE
         ret
 
 .colon "AND", and_
-        DPOP r8
-        DPOP r9
-        and r8, r9
-        DPUSH r8
+        and TOS, [PSP]
+        add PSP, CELLSIZE
         ret
 
 .colon "OR", or_
-        DPOP r8
-        DPOP r9
-        or r8, r9
-        DPUSH r8
+        or TOS, [PSP]
+        add PSP, CELLSIZE
         ret
 
 .colon "XOR", xor_
-        DPOP r8
-        DPOP r9
-        xor r8, r9
-        DPUSH r8
+        xor TOS, [PSP]
+        add PSP, CELLSIZE
         ret
 
-.colon "EXIT", exit
-        pop r8
-        ret
 
 ;; User-level applications use as integer registers for passing the
 ;; sequence %rdi, %rsi, %rdx, %rcx, %r8 and %r9. The kernel interface
@@ -560,10 +581,9 @@ ugreaterthanorequal_yes:
         ret
 
 .colon "PICK", pick
-        mov r8, TOS
-        shl r8, 3               ; cell size is 8
-        add r8, PSP
-        mov TOS, [r8]
+        shl TOS, 3               ; cell size is 8
+        add TOS, PSP
+        mov TOS, [TOS]
         ret
 
 .colon "ROLL", roll
@@ -593,19 +613,6 @@ ugreaterthanorequal_yes:
 .colon "CR", cr
         DPUSH 10
         call emit
-        ret
-
-.colon "C@", cfetch
-        DPOP W
-        xor rbx, rbx
-        mov bl, [W]            ; hmmm... we do want to read a single char here
-        DPUSH rbx
-        ret
-
-.colon "C!", cstore
-        DPOP r8
-        DPOP rbx                ; same here
-        mov [r8], bl
         ret
 
 .colon "BYE", bye
