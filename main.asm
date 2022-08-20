@@ -52,6 +52,8 @@ bits 64
         DIGITS db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         TRUE equ -1
         FALSE equ 0
+        MMAP_FLAGS equ 0x22 ; MMAP_ANONYMOUS|MMAP_PRIVATE
+        MMAP_PROTECTION equ 0x7 ; RWE
 
 ;; static data stuff
 SECTION .data
