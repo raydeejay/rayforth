@@ -4,6 +4,45 @@
 
 bits 64
 
+;; design goals:
+;; -------------
+
+;; designed to run under Linux x64
+;; the native cell size is 64-bit
+;; must be able to interpret most words
+;; must produce reasonably fast code
+;; must be implemented in an easy to understand way
+;; will attempt to follow the Forth2012 Standard (latest at the time of implementation)
+;; should... provide a C interface
+
+
+;; The Forth 2012 Standard is considered a suggestion/guideline
+
+;; most of the core words can be implemented as macros (immediate
+;; words) that compile small snippets of machine code, somewhat
+;; similar to machineforth
+
+;; should make a decision on whether to have dual sets of words
+;; (DUP/DUP,) for interpretation/regular compiling vs inlining
+
+;; how to implement J when having both FOR/NEXT and DO/LOOP? if at all...
+
+
+;; once file access is implemented, determine what should be a
+;; primitive and what should be a high level definition, then move the
+;; high level code to boot.fs
+
+;; things that are used frequently or interface with the OS:
+;; --------------------------------
+;; math words
+;; stack words
+;; syscalls
+
+
+;; writing "fast" code in Forth is possible given a basic set of words
+;; capable of assembling code
+
+
 ;; Register Allocation
 
 ;; The System V ABI has just enough registers that we can avoid using
@@ -176,42 +215,45 @@ DICTIONARY:
         ret
 
 
-.colon "@",fetch
-        DPOP r8
-        mov qword r9, qword [r8]
-        DPUSH r9
+.colon "@", fetch
+        mov TOS, [TOS]
         ret
 
 .colon "!",store
-        DPOP r8
-        DPOP r9
-        mov qword [r8], qword r9
+        mov r8, [PSP]
+        mov [TOS], r8
+        xchg TOS, [PSP+CELLSIZE]
+        add PSP, CELLSIZE*2
         ret
 
 .colon "C@", cfetch
-        DPOP W
-        xor rbx, rbx
-        mov bl, [W]            ; hmmm... we do want to read a single char here
-        DPUSH rbx
+        xor r8, r8
+        xchg r8, TOS
+        mov r15b, [r8]
         ret
 
 .colon "C!", cstore
-        DPOP r8
-        DPOP rbx                ; same here
-        mov [r8], bl
+        mov r8, [PSP]
+        mov byte [TOS], r8b
+        xchg TOS, [PSP+CELLSIZE]
+        sub PSP, CELLSIZE*2
         ret
 
 
 .colon "RP@", rpFetch
-        mov r8, rsp
-        DPUSH r8
+        sub PSP, CELLSIZE
+        xchg [PSP], TOS
+        mov TOS, rsp            ; are we returning the right value here...? this is not inlined...
+        add TOS, 8
         ret
 
 .colon "R@", rfetch
-        mov r8, [rsp]
-        DPUSH r8
+        sub PSP, CELLSIZE
+        xchg [PSP], TOS
+        mov TOS, [rsp+8]
         ret
 
+;; these words become shorter if code is inlined
 .colon "R>", torstack
         pop r8
         pop r9
@@ -247,17 +289,54 @@ zeroNotEqualTrue:
         mov TOS, -1
         ret
 
+
 .colon "=", equal
-        DPOP r8
-        DPOP r9
-        cmp r8, r9
+        cmp TOS, [PSP]
         je equalTrue
 equalFalse:
-        DPUSH 0
-        ret
+        mov TOS, 0
+        jmp equalDone
 equalTrue:
-        DPUSH -1
+        mov TOS, -1
+equalDone:
+        add PSP, CELLSIZE
         ret
+
+.colon "<>", different
+        cmp TOS, [PSP]
+        jne differentTrue
+differentFalse:
+        mov TOS, 0
+        jmp differentDone
+differentTrue:
+        mov TOS, -1
+differentDone:
+        add PSP, CELLSIZE
+        ret
+
+
+; .colon "<", lesserthan
+;         xor r8, r8
+;         xchg r8, TOS
+;         cmp r8, [PSP]
+;         jg lesserthan_yes
+; lesserthan_done:
+;         ret
+; lesserthan_yes:
+;         mov TOS, -1
+;         jmp lesserthan_done
+
+; .colon ">", greaterthan
+;         xor r8, r8
+;         xchg r8, TOS
+;         cmp r8, [PSP]
+;         jl greaterthan_yes
+; greaterthan_done:
+;         ret
+; greaterthan_yes:
+;         mov TOS, -1
+;         jmp greaterthan_done
+
 
 .colon "<", lesserthan
         xor r8, r8
@@ -281,6 +360,7 @@ greaterthan_yes:
         mov TOS, -1
         jmp greaterthan_done
 
+
 .colon "<=", lesserthanorequal
         xor r8, r8
         xchg r8, TOS
@@ -303,6 +383,7 @@ greaterthanorequal_yes:
         mov TOS, -1
         jmp greaterthanorequal_done
 
+
 .colon "U<", ulesserthan
         xor r8, r8
         xchg r8, TOS
@@ -324,6 +405,7 @@ ugreaterthan_done:
 ugreaterthan_yes:
         mov TOS, -1
         jmp ugreaterthan_done
+
 
 .colon "U<=", ulesserthanorequal
         xor r8, r8
@@ -350,18 +432,18 @@ ugreaterthanorequal_yes:
 
 .colon "+", plus
         add TOS, [PSP]
-        add PSP, 8
+        add PSP, CELLSIZE
         ret
 
 .colon "-", minus
         xchg TOS, [PSP]
         sub TOS, [PSP]
-        add PSP, 8
+        add PSP, CELLSIZE
         ret
 
 .colon "*", multiply            ; bit broken but works for reasonable numbers... xD
         imul TOS, [PSP]
-        add PSP, 8
+        add PSP, CELLSIZE
         ret
 
 ;; Signed divide RDX:RAX by r/m64, with result stored in
@@ -527,7 +609,7 @@ ugreaterthanorequal_yes:
         push 0
         DPUSH 1
         DPUSH rsp
-        DPUSH 1
+        DPUSH 0
         DPUSH 0
         call colonsyscall3
         call drop
@@ -577,7 +659,7 @@ ugreaterthanorequal_yes:
 
 .colon "-ROT", minusrot         ; ( a b c -- c a b )
         mov r8, [PSP]
-        add PSP, 8
+        add PSP, CELLSIZE
         xchg [PSP], TOS
         DPUSH r8
         ret
@@ -649,32 +731,46 @@ ugreaterthanorequal_yes:
         call drop
         ret
 
+.colon '\', backslash
+        DPUSH 10
+        call word_
+        call drop
+        ret
+
+.colon "#!", shellsignature
+        DPUSH 10
+        call word_
+        call drop
+        ret
+
+.variable "SOURCE-ID", sourceid, 0
+
 .colon "REFILL", refill
+        mov r8, [val_sourceid]
+        cmp r8, -1
+        je refill_error
+
+        ; clear the input buffer
         mov rdi, TIBDATA
         mov rcx, BUFFERSIZE
         mov al, ' '
         rep stosb
 
+        ; read a... line?
         DPUSH BUFFERSIZE
         DPUSH TIBDATA
-        DPUSH 1
+        mov r8, [val_sourceid]
+        DPUSH r8
         DPUSH 0
         call colonsyscall3
         DPOP rax
 
         ; rax holds size or -errno
         test rax, rax
+        ;; exit when either error or EOF :-)
         js refill_error
+        jz refill_error
 
-        ; no error, so let's patch that possible 0x0A...
-        cmp rax, BUFFERSIZE
-        je refill_dont_patch
-
-        add rax, TIBDATA
-        dec rax
-        mov [rax], byte ' '
-
-refill_dont_patch:
         ; no error, reset >IN and return true
         DPUSH 0
         call TIBIN
@@ -685,6 +781,42 @@ refill_dont_patch:
 refill_error:
         DPUSH 0                 ; return false
         ret
+
+.constant "R/O", rofam, 0
+.constant "W/O", wofam, 1
+.constant "R/W", rwfam, 2
+
+; .colon 'S"', squote             ; always compiles a string (?)
+;         DPUSH '"'
+;         call word_
+;         ; ignore errors, they never happen :D
+;         ; also ignore length 0 because yeah :D
+;         call count
+;         DPOP rcx
+;         DPOP rsi
+;         mov rdi, val_dp
+;         ; compile LITERAL address
+;         DPUSH lit
+;         call compilecomma
+;         mov r8, rdi
+;         add r8, 5+8+5+8+5       ; length of the lit calls and jump
+;         DPUSH r8
+;         call comma
+;         ; compile LITERAL length
+;         DPUSH lit
+;         call compilecomma
+;         DPUSH rcx
+;         call comma
+;         ; compile relative jump, offset LENGTH
+;         mov W, rdi
+;         mov byte [rdi], 0xE9
+;         mov dword [rdi+1], ecx
+;         ; store string inline
+;         rep movsb
+;         ; push address and count
+;         DPUSH 0
+;         DPUSH rcx
+;         ret
 
 ;; Outer interpreter stuff
 .constant "BL", bl_, ' '
@@ -712,39 +844,50 @@ refill_error:
         ; mov rdi, PSP
         ; ok so what if we move it to the return stack instead...?
         DPOP r8
+        push 10                 ; newline
         push r8
-        mov rdi, rsp
 
 
 word_skip_delimiters:
+        mov rdi, rsp
         cmpsb
+        je word_check_end
 
-        ; if not equal we have a word
-        jne skipped_delimiters
+        ;; if not equal we may have a word
+        ;; we still need to check for newline
 
+maybe_newline:
+        dec rsi
+        add rdi, 7
+        cmpsb
+        je word_check_end
+
+        ;; we do have a word
+        jmp skipped_delimiters
+
+word_check_end:
         ; if we went over the end of TIBDATA, we're done
         cmp rsi, TIBDATA+BUFFERSIZE
         je tibdata_was_empty
 
-        ; otherwise move to the next char and repeat
-        dec rdi                 ; RDI should always point to the same char
+        ;; otherwise continue
         jmp word_skip_delimiters
 
 tibdata_was_empty:
         mov rsi, WORDBUFFER
         mov qword [rsi], qword 0
 
-        ; clean up
-        ; call drop
+        ; clean up the delimiters from the return stack
+        ; call drop (?)
+        pop r8
         pop r8
         DPUSH WORDBUFFER
 
         ret
 
 skipped_delimiters:
-        ; readjust the pointers back 1 char
+        ; readjust the pointers back
         dec rsi
-        dec rdi
         DPUSH rsi               ; save the beginning of the word
 
 find_closing_delimiter:
@@ -753,17 +896,23 @@ find_closing_delimiter:
         ; the delimiter is on rdi (and on the stack under TOS)
 
         ; compare char with delimiter
+        mov rdi, rsp
         cmpsb
 
         ; if we find delimiter, we are past the word
+        je found_closing_delimiter
+
+        ;; repeat for newline
+        dec rsi
+        add rdi, 7
+        cmpsb
         je found_closing_delimiter
 
         ; if we went over the end of TIBDATA, return right away
         cmp rsi, TIBDATA+BUFFERSIZE
         je found_closing_delimiter
 
-        ; otherwise move along to the next char
-        dec rdi                 ; RDI should always point to the same char
+        ;; otherwise move along to the next char
         jmp find_closing_delimiter
 
 found_closing_delimiter:
@@ -791,8 +940,9 @@ found_closing_delimiter:
         inc rdi
         rep movsb
 
-        ; clear the delimiter off the stack
-        ;call drop
+        ;; clear the delimiters off the stack
+        ;; call drop (?)
+        pop r8
         pop r8
 
         ; return the address of the parsed word
@@ -1297,7 +1447,11 @@ period_done:
 .colon "QUIT", quit
         ; interpret some words from TIB separated by spaces(!)
         call refill
-        call drop               ; should do something with this flag(!)
+        DPOP r8
+        test r8, r8
+        jz bye
+
+        ;; call drop    ; should do something with this flag(!)
 
         call interpret
         call quit_prompt
@@ -1308,6 +1462,13 @@ quit_prompt:
         DPUSH promptLen
         call type
         ret
+
+;; .colon "QUIT", quit
+;;         ; debug loop
+;;         call key
+;;         call emit
+;;         call quit_prompt
+;;         jmp quit
 
 .colon "ALLOT", allot           ; ( n -- )
         ; should clear the space too?
@@ -1528,11 +1689,11 @@ created:
         pop r9
         DPOP r8
         test r8, r8
-        jz zerobranch_forward
+        jz zerobranch_backward
         add r9, CELLSIZE
         push r9
         ret
-zerobranch_forward:
+zerobranch_backward:
         push qword [r9]
         ret
 
@@ -1550,7 +1711,7 @@ zerobranch_forward:
         ret
 
 .colon "(next)", innernext
-        ; decrease the loop counter by 1
+        ; decrease the index by 1
         dec qword [rsp+8]
         ret
 
@@ -1561,10 +1722,46 @@ zerobranch_forward:
         push r8
         ret
 
+.colon "(do)", innerdo
+        ;; put index and limit on the return stack
+        DPOP r8
+        DPOP r9
+        pop r10
+        push r9
+        push r8
+        push r10
+        ret
+
+.colon "(loop)", innerloop
+        ; increase the loop counter by 1
+        inc qword [rsp+8]
+        ret
+
+.colon "(enddo)", enddo
+        ; remove the loop data from return stack
+        pop r8
+        pop r9
+        pop r9
+        push r8
+        ret
+
+
 .colon "I", i
         mov r8, [rsp+8]
         DPUSH r8
         ret
+
+.colon "J", j
+        mov r8, [rsp+24]
+        DPUSH r8
+        ret
+
+.colon "(limit)", dolimit
+        mov r8, [rsp+16]
+        DPUSH r8
+        ret
+
+
 
 
 ;; allocation:
@@ -1579,6 +1776,9 @@ zerobranch_forward:
 ;; subtract 8 bytes from the address, store the new length there
 
 ;; dynamic memory - mmap() allocates 4Kb pages (so it should always be aligned...?)
+
+;; test this ???
+
 .colon "ALLOCATE", allocate     ; ( u -- addr ior )
         ; off fd flags prot len address 9 SYSCALL/6
         DPOP W                  ; save the length in W
@@ -1674,6 +1874,33 @@ fill_end:
         call fill
         ret
 
+filenamestr:
+        resb 4096
+
+
+;; ( c-addr u fam -- fileid ior )
+.colon "OPEN-FILE", openfile
+        call minusrot           ; ( fam c-addr u )
+
+        ;; clear filenamestr with zeros ( C-string compatibility )
+        DPUSH filenamestr
+        DPUSH 4096
+        DPUSH 0
+        call fill
+
+        DPUSH filenamestr
+        call swap               ; ( fam a-addr fstr u )
+        call cmove              ; ( fam )  ; mode
+
+        DPUSH 0                 ; flags
+
+        DPUSH filenamestr       ; C-filename pointer
+
+        DPUSH 2
+        ;; mode flags c-string 2
+        call colonsyscall3
+        DPUSH rax
+        ret
 
 
 ; last builtin word, for now, this is important because init uses this
@@ -1789,10 +2016,15 @@ init:
         mov rsi, val_latest
         mov qword [rsi], create_entry ; THIS HAS TO BE MANUALLY UPDATED...(!)
 
+        ; load boot.fs
+
+
         ret
 
 
 ;; --- more code ---
+
+
 ;; function things
 display:
         DPUSH PADDATA
