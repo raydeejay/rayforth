@@ -1,7 +1,7 @@
 #! /home/raydj/forth/rayforth/rayforth-launcher
 
 ( this is a test flag )
-1234567890
+\ 1234567890
 
 : >NAME  8 + ;
 : >CODE  8 + COUNT + ;
@@ -67,4 +67,13 @@
 ;
 
 ( print the test flag )
-. CR
+\ . CR
+
+: CHAR  BL WORD 1 + C@ ; IMMEDIATE
+: [CHAR] BL WORD 1 + C@ ['] LIT COMPILE, , ; IMMEDIATE
+
+\ some VT100 stuff
+: <ESC>  27 EMIT ;
+: <CSI>  [CHAR] [ EMIT ;
+
+: PAGE  <ESC> <CSI> [CHAR] 2 EMIT [CHAR] J EMIT ;
