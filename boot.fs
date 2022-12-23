@@ -69,11 +69,15 @@
 ( print the test flag )
 \ . CR
 
-: CHAR  BL WORD 1 + C@ ; IMMEDIATE
-: [CHAR] BL WORD 1 + C@ ['] LIT COMPILE, , ; IMMEDIATE
+: LITERAL  ( x -- ) ['] LIT COMPILE, , ; IMMEDIATE
+
+: CHAR  BL WORD 1 + C@ ;
+: [CHAR] BL WORD 1 + C@ POSTPONE LITERAL ; IMMEDIATE
 
 \ some VT100 stuff
 : <ESC>  27 EMIT ;
 : <CSI>  [CHAR] [ EMIT ;
 
 : PAGE  <ESC> <CSI> [CHAR] 2 EMIT [CHAR] J EMIT ;
+
+: FOO  [ 3 4 + ] LITERAL . ;
