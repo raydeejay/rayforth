@@ -88,3 +88,14 @@
 \ and use `1 x U.R`
 \ hacked in a `..` word
 : AT  ( x y -- )  <ESC> <CSI> .. [CHAR] ; EMIT .. [CHAR] H EMIT    ;
+
+: ATTR:  ( "name" n -- )
+  CREATE , DOES> <ESC> <CSI> @ EMIT [CHAR] m EMIT
+;
+
+CHAR 1 ATTR: <BOLD>
+CHAR 2 ATTR: <LOW>
+CHAR 4 ATTR: <UNDERLINE>
+CHAR 5 ATTR: <BLINK>
+CHAR 7 ATTR: <REVERSE>
+CHAR 8 ATTR: <INVISIBLE>
