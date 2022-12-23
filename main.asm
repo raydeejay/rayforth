@@ -725,7 +725,7 @@ ugreaterthanorequal_yes:
         DPUSH r8
         ret
 
-.colon "(", leftparen
+.colon "(", leftparen, IMM
         DPUSH ')'
         call word_
         call drop
