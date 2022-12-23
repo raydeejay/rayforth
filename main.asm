@@ -1443,6 +1443,63 @@ period_done:
         call emit
         ret
 
+;; hack to print numbers without spaces, until I implement U.R
+.colon "..", period2              ; ( n -- )
+        ; if 0, just print 0 and exit
+        DPOP rax
+        test rax, rax
+        jz period_zero2
+
+        ; display negatives somehow... only if BASE is 10
+        cmp qword [val_base], 10
+        jne period_begin_process2
+
+        ; print a '-' only if it's a negative
+        test rax, rax
+        jns period_begin_process2
+
+        xchg rax, r8
+        DPUSH '-'
+        push rax
+        push r8
+        call emit
+        pop r8
+        pop rax
+        xchg rax, r8
+        ; then negate then number and print it normally
+        neg rax
+
+period_begin_process2:
+        xor r8, r8
+
+period_process_digit2:
+        xor rdx, rdx
+        mov rbx, [val_base]
+        div rbx
+        add rdx, DIGITS            ; make a letter
+        mov rdx, [rdx]
+        DPUSH byte rdx
+        inc r8
+        test rax, rax
+        jnz period_process_digit2
+
+period_emit_digit2:
+        ; no more digits, print them back from the stack
+        push r8
+        call emit
+        pop r8
+        dec r8
+        jnz period_emit_digit2
+
+        jmp period_done2
+
+period_zero2:
+        DPUSH '0'
+        call emit
+
+period_done2:
+        ret
+
 
 .colon "QUIT", quit
         ; interpret some words from TIB separated by spaces(!)

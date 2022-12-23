@@ -80,4 +80,11 @@
 
 : PAGE  <ESC> <CSI> [CHAR] 2 EMIT [CHAR] J EMIT ;
 
+\ a test word
 : FOO  [ 3 4 + ] LITERAL . ;
+
+\ can't use `.` because it prints a space
+\ should implement `U.R`
+\ and use `1 x U.R`
+\ hacked in a `..` word
+: AT  ( x y -- )  <ESC> <CSI> .. [CHAR] ; EMIT .. [CHAR] H EMIT    ;
