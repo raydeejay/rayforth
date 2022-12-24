@@ -236,9 +236,16 @@ DICTIONARY:
         mov r8, [PSP]
         mov byte [TOS], r8b
         xchg TOS, [PSP+CELLSIZE]
-        sub PSP, CELLSIZE*2
+        add PSP, CELLSIZE*2
         ret
 
+
+.colon "PSP", pointerOfNOS
+        mov r8, PSP
+        sub PSP, CELLSIZE
+        mov [PSP], TOS
+        mov TOS, r8
+        ret
 
 .colon "RP@", rpFetch
         sub PSP, CELLSIZE
