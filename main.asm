@@ -344,6 +344,7 @@ differentDone:
         cmp r8, [PSP]
         jg lesserthan_yes
 lesserthan_done:
+        add PSP, CELLSIZE
         ret
 lesserthan_yes:
         mov TOS, -1
@@ -355,6 +356,7 @@ lesserthan_yes:
         cmp r8, [PSP]
         jl greaterthan_yes
 greaterthan_done:
+        add PSP, CELLSIZE
         ret
 greaterthan_yes:
         mov TOS, -1
@@ -367,6 +369,7 @@ greaterthan_yes:
         cmp r8, [PSP]
         jge lesserthanorequal_yes
 lesserthanorequal_done:
+        add PSP, CELLSIZE
         ret
 lesserthanorequal_yes:
         mov TOS, -1
@@ -378,6 +381,7 @@ lesserthanorequal_yes:
         cmp r8, [PSP]
         jle greaterthanorequal_yes
 greaterthanorequal_done:
+        add PSP, CELLSIZE
         ret
 greaterthanorequal_yes:
         mov TOS, -1
@@ -390,6 +394,7 @@ greaterthanorequal_yes:
         cmp r8, [PSP]
         ja ulesserthan_yes
 ulesserthan_done:
+        add PSP, CELLSIZE
         ret
 ulesserthan_yes:
         mov TOS, -1
@@ -401,6 +406,7 @@ ulesserthan_yes:
         cmp r8, [PSP]
         jb ugreaterthan_yes
 ugreaterthan_done:
+        add PSP, CELLSIZE
         ret
 ugreaterthan_yes:
         mov TOS, -1
@@ -413,6 +419,7 @@ ugreaterthan_yes:
         cmp r8, [PSP]
         jae ulesserthanorequal_yes
 ulesserthanorequal_done:
+        add PSP, CELLSIZE
         ret
 ulesserthanorequal_yes:
         mov TOS, -1
@@ -424,6 +431,7 @@ ulesserthanorequal_yes:
         cmp r8, [PSP]
         jbe ugreaterthanorequal_yes
 ugreaterthanorequal_done:
+        add PSP, CELLSIZE
         ret
 ugreaterthanorequal_yes:
         mov TOS, -1
