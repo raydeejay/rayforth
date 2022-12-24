@@ -2119,8 +2119,6 @@ hello:
 _start:
         call init
         call hello
-        ;call testword
-        ;call testword2
         call quit
         ;call display
         jmp coda
