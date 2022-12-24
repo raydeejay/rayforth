@@ -83,10 +83,14 @@
 \ a test word
 : FOO  [ 3 4 + ] LITERAL . ;
 
-\ can't use `.` because it prints a space
-\ should implement `U.R`
-\ and use `1 x U.R`
-\ hacked in a `..` word
+: UNDER+  ( a b c -- a+c b )  ROT + SWAP ;
+: SPACE   ( -- )  BL EMIT ;
+: SPACES  ( n -- )  DUP 0 > IF  0 DO  BL EMIT  LOOP  EXIT THEN  DROP ;
+
+: U.R  ( rlen u -- )
+  TUCK  BEGIN  DUP  WHILE  -1 UNDER+ BASE @ /  REPEAT  DROP SPACES ..
+;
+
 : AT  ( x y -- )  <ESC> <CSI> .. [CHAR] ; EMIT .. [CHAR] H EMIT    ;
 
 : ATTR:  ( "name" n -- )
