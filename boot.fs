@@ -103,3 +103,26 @@ CHAR 4 ATTR: <UNDERLINE>
 CHAR 5 ATTR: <BLINK>
 CHAR 7 ATTR: <REVERSE>
 CHAR 8 ATTR: <INVISIBLE>
+
+: S>D    ( u -- ud )   0 SWAP ;
+: (ior)  ( n -- n ior ) 0 < ;
+
+: READ-FILE  ( c-addr u1 fid -- u2 ior )
+  ROT SWAP 0 SYSCALL/3 DUP (ior)
+;
+
+: FILE-POSITION  ( fid -- ud ior )
+  1 0 ROT 8 SYSCALL/3 S>D DUP (ior)
+;
+
+: FILE-SIZE  ( fid -- ud ior )
+  DUP DUP FILE-POSITION DROP
+  ROT 2 0 ROT 8 SYSCALL/3 >R
+  ROT 8 SYSCALL/3 DROP
+  DROP R> S>D DUP (ior)
+;
+
+: REPOSITION-FILE  ( ud fid -- ior )
+  ( use the sure-to-be 0 as SEEK_SET )
+  8 SYSCALL/3 (ior)
+;

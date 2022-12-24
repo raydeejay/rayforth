@@ -109,6 +109,9 @@ align 8
         promptStr db " ok", 10
         promptLen equ $-promptStr
 
+        hardcodedFilenameStr db 7, "boot.fs"
+        hardcodedFilenameLen equ $-hardcodedFilenameStr
+
         ; pop r8
         ; sub rbp, 8
         ; mov [rbp], r8
@@ -1949,6 +1952,9 @@ fill_end:
 filenamestr:
         resb 4096
 
+.colon "HCFILENAME", hcfilename
+        DPUSH hardcodedFilenameStr
+        ret
 
 ;; ( c-addr u fam -- fileid ior )
 .colon "OPEN-FILE", openfile
@@ -1965,15 +1971,14 @@ filenamestr:
         call cmove              ; ( fam )  ; mode
 
         DPUSH 0                 ; flags
-
         DPUSH filenamestr       ; C-filename pointer
-
         DPUSH 2
-        ;; mode flags c-string 2
         call colonsyscall3
-        DPUSH rax
+        ;; must return ior
+        call dup
+        DPUSH 0
+        call lesserthan
         ret
-
 
 ; last builtin word, for now, this is important because init uses this
 ; word to set up LATEST
