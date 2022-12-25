@@ -749,13 +749,13 @@ ugreaterthanorequal_yes:
         call drop
         ret
 
-.colon '\', backslash
+.colon '\', backslash, IMM
         DPUSH 10
         call word_
         call drop
         ret
 
-.colon "#!", shellsignature
+.colon "#!", shellsignature, IMM
         DPUSH 10
         call word_
         call drop
