@@ -127,7 +127,18 @@ CHAR 8 ATTR: <INVISIBLE>
   8 SYSCALL/3 (ior)
 ;
 
-: S"  ( "string" -- c-addr )
+\ only one buffer for now
+CREATE <STRINGBUFFER> 4096 ALLOT
+
+: <S">  ( "string" -- addr n )
+  [CHAR] " WORD
+  COUNT TUCK <STRINGBUFFER> C!
+  SWAP <STRINGBUFFER> 1 + SWAP CMOVE
+  <STRINGBUFFER> COUNT
+;
+
+: S"  ( "string" -- addr n )
+  STATE @ 0= IF  <S">  EXIT THEN
   ['] (branch) COMPILE, HERE 0 ,
   [CHAR] " WORD
   DUP COUNT + 1 + DP !
