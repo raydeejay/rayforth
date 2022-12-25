@@ -90,6 +90,19 @@
 : SPACE   ( -- )  BL EMIT ;
 : SPACES  ( n -- )  DUP 0 > IF  0 DO  BL EMIT  LOOP  EXIT THEN  DROP ;
 
+CREATE <pno> 256 ALLOT
+VARIABLE #<pno>
+
+\ these should respect BASE, rewrite (the CHAR 0 + part)
+: <# ( -- )  <pno> 256 ERASE  255 #<pno> ! ;
+: #  ( ud1 -- ud2 )
+  BASE @ UM/MOD  [CHAR] 0 +  <pno> #<pno> @ +  C!
+  -1 #<pno> +!  S>D
+;
+: #S ( ud1 -- 0 0 )  BEGIN  # DUP  WHILE REPEAT  ;
+: #> ( xd -- c-addr u )  2DROP <pno> 256 + #<pno> @ - #<pno> @ ;
+
+
 : U.R  ( rlen u -- )
   TUCK  BEGIN  DUP  WHILE  -1 UNDER+ BASE @ /  REPEAT  DROP SPACES ..
 ;
