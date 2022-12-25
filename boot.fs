@@ -152,11 +152,10 @@ CREATE <STRINGBUFFER> 4096 ALLOT
   <STRINGBUFFER> COUNT
 ;
 
+: (S")  ( R: addr -- R: addr> )  R>  COUNT  2DUP +  >R  ;
+
 : S"  ( "string" -- addr n )
   STATE @ 0= IF  <S">  EXIT THEN
-  ['] (branch) COMPILE, HERE 0 ,
-  [CHAR] " WORD
-  DUP COUNT + 1 + DP !
-  SWAP HERE SWAP !
-  COUNT SWAP POSTPONE LITERAL POSTPONE LITERAL
+  ['] (S") COMPILE,  [CHAR] " WORD
+  HERE COUNT + DP !
 ; IMMEDIATE
