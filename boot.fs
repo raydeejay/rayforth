@@ -3,6 +3,8 @@
 ( this is a test flag )
 \ 1234567890
 
+: S>D    ( u -- ud )   0 SWAP ;
+
 : >NAME  8 + ;
 : >CODE  8 + COUNT + ;
 
@@ -104,7 +106,6 @@ CHAR 5 ATTR: <BLINK>
 CHAR 7 ATTR: <REVERSE>
 CHAR 8 ATTR: <INVISIBLE>
 
-: S>D    ( u -- ud )   0 SWAP ;
 : (ior)  ( n -- n ior ) 0 < ;
 
 : READ-FILE  ( c-addr u1 fid -- u2 ior )
