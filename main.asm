@@ -229,6 +229,13 @@ DICTIONARY:
         add PSP, CELLSIZE*2
         ret
 
+.colon "+!",plusstore
+        mov r8, [PSP]
+        add [TOS], r8
+        xchg TOS, [PSP+CELLSIZE]
+        add PSP, CELLSIZE*2
+        ret
+
 .colon "C@", cfetch
         xor r8, r8
         xchg r8, TOS
@@ -238,6 +245,13 @@ DICTIONARY:
 .colon "C!", cstore
         mov r8, [PSP]
         mov byte [TOS], r8b
+        xchg TOS, [PSP+CELLSIZE]
+        add PSP, CELLSIZE*2
+        ret
+
+.colon "C+!", cplusstore
+        mov r8, [PSP]
+        add byte [TOS], r8b
         xchg TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
         ret
