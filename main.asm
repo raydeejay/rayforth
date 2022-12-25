@@ -804,38 +804,6 @@ refill_error:
 .constant "W/O", wofam, 1
 .constant "R/W", rwfam, 2
 
-; .colon 'S"', squote             ; always compiles a string (?)
-;         DPUSH '"'
-;         call word_
-;         ; ignore errors, they never happen :D
-;         ; also ignore length 0 because yeah :D
-;         call count
-;         DPOP rcx
-;         DPOP rsi
-;         mov rdi, val_dp
-;         ; compile LITERAL address
-;         DPUSH lit
-;         call compilecomma
-;         mov r8, rdi
-;         add r8, 5+8+5+8+5       ; length of the lit calls and jump
-;         DPUSH r8
-;         call comma
-;         ; compile LITERAL length
-;         DPUSH lit
-;         call compilecomma
-;         DPUSH rcx
-;         call comma
-;         ; compile relative jump, offset LENGTH
-;         mov W, rdi
-;         mov byte [rdi], 0xE9
-;         mov dword [rdi+1], ecx
-;         ; store string inline
-;         rep movsb
-;         ; push address and count
-;         DPUSH 0
-;         DPUSH rcx
-;         ret
-
 ;; Outer interpreter stuff
 .constant "BL", bl_, ' '
 
