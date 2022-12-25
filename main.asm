@@ -642,8 +642,22 @@ ugreaterthanorequal_yes:
         mov [PSP], TOS
         ret
 
+.colon "2DUP", _2dup               ; ( a b -- a b a b )
+        mov r8, [PSP]
+        sub PSP, CELLSIZE*2
+        mov [PSP+CELLSIZE], TOS
+        mov [PSP], r8
+        ret
+
 .colon "SWAP", swap             ; ( a b -- b a )
         xchg [PSP], TOS
+        ret
+
+.colon "2SWAP", _2swap             ; ( a b c d -- c d a b )
+        xchg [PSP+CELLSIZE], TOS
+        mov r8, [PSP+CELLSIZE*2]
+        xchg [PSP], r8
+        mov [PSP+CELLSIZE*2], r8
         ret
 
 .colon "DROP", drop             ; ( a -- )
@@ -651,9 +665,22 @@ ugreaterthanorequal_yes:
         add PSP, CELLSIZE
         ret
 
+.colon "2DROP", _2drop             ; ( a b -- )
+        xchg [PSP+CELLSIZE], TOS
+        add PSP, CELLSIZE*2
+        ret
+
 .colon "OVER", over             ; ( a b -- a b a )
         mov r8, [PSP]
         DPUSH r8
+        ret
+
+.colon "2OVER", _2over             ; ( a b c d -- a b c d a b )
+        sub PSP, CELLSIZE*2
+        mov [PSP+CELLSIZE], TOS
+        mov r8, [PSP+CELLSIZE*4]
+        mov [PSP], r8
+        mov TOS, [PSP+CELLSIZE*3]
         ret
 
 .colon "NIP", nip               ; ( a b -- b )
