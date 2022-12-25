@@ -488,6 +488,17 @@ ugreaterthanorequal_yes:
         mov TOS, rdx
         ret
 
+;; Unsigned divide RDX:RAX by r/m64, with result stored in
+;; RAX ← Quotient, RDX ← Remainder.
+;; ( ud u1 -- u2 u3 )
+.colon "UM/MOD", umdividemod
+        mov rdx, [PSP+CELLSIZE] ; which will be 0, but whatever...
+        mov rax, [PSP]
+        div TOS
+        mov [PSP], rax
+        mov TOS, rdx
+        ret
+
 .colon "/", divide
         xor rdx, rdx
         mov rax, [PSP]
