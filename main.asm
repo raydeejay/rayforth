@@ -892,14 +892,17 @@ word_check_end:
         jmp word_skip_delimiters
 
 tibdata_was_empty:
-        mov rsi, WORDBUFFER
+        ;; mov rsi, WORDBUFFER
+        mov rsi, [val_dp]
         mov qword [rsi], qword 0
 
         ; clean up the delimiters from the return stack
         ; call drop (?)
         pop r8
         pop r8
-        DPUSH WORDBUFFER
+        ;; DPUSH WORDBUFFER
+        mov r8, [val_dp]
+        DPUSH r8
 
         ret
 
@@ -951,7 +954,8 @@ found_closing_delimiter:
         dec rcx                 ; correct the off by one
 
         mov rsi, W
-        mov rdi, WORDBUFFER
+        ;; mov rdi, WORDBUFFER
+        mov rdi, [val_dp]
         mov [rdi], cl           ; put the count
 
         ; put the string
@@ -964,7 +968,9 @@ found_closing_delimiter:
         pop r8
 
         ; return the address of the parsed word
-        DPUSH WORDBUFFER
+        ;; DPUSH WORDBUFFER
+        mov r8, [val_dp]
+        DPUSH r8
         ret
 
 .colon "FIND", find             ; ( c-addr -- c-addr 0 | xt 1 | xt -1 )
@@ -1710,25 +1716,29 @@ postpone_end:
         call store
 
         call bl_                ; get the word name
-        call word_              ; which will be on WORDBUFFER as a c-string
+        ;; call word_              ; which will be on WORDBUFFER as a c-string
+        call word_              ; which will be on HERE as a counted string
 
-        ; then flags+count followed by the name
-        call dup
-        call cfetch
-        DPUSH 1
-        call plus
-        DPOP rcx                ; we will copy count+1 bytes
-        DPOP rsi
-        DPUSH rcx               ; let's keep the size on the stack
-        call dp
-        call fetch
-        DPOP rdi
-        rep movsb
+        ;; get the length and increment dp
+        ;; then flags+count followed by the name
+        ;; call dup
+        ;; call cfetch
+        ;; DPUSH 1
+        ;; call plus
+        ;; DPOP rcx                ; we will copy count+1 bytes
+        ;; DPOP rsi
+        ;; DPUSH rcx               ; let's keep the size on the stack
+        ;; call dp
+        ;; call fetch
+        ;; DPOP rdi
+        ;; rep movsb
 
         ; update here (we left the count on the stack)
-        call dp
-        call fetch
-        call plus               ; add HERE to the size we kept on the stack
+        call dup
+        call cfetch
+        call plus
+        DPUSH 1
+        call plus               ; add HERE to the size we kept on the stack + 1
         call dp
         call store
 
@@ -2006,22 +2016,24 @@ filenamestr:
         call word_              ; which will be on WORDBUFFER as a c-string
 
         ; then flags+count followed by the name
+        ;; call dup
+        ;; call cfetch
+        ;; DPUSH 1
+        ;; call plus
+        ;; DPOP rcx                ; we will copy count+1 bytes
+        ;; DPOP rsi
+        ;; DPUSH rcx               ; let's keep the size on the stack
+        ;; call dp
+        ;; call fetch
+        ;; DPOP rdi
+        ;; rep movsb
+
+        ; update here (we left the address on the stack)
         call dup
         call cfetch
+        call plus               ; add HERE to the size we kept on the stack
         DPUSH 1
         call plus
-        DPOP rcx                ; we will copy count+1 bytes
-        DPOP rsi
-        DPUSH rcx               ; let's keep the size on the stack
-        call dp
-        call fetch
-        DPOP rdi
-        rep movsb
-
-        ; update here (we left the count on the stack)
-        call dp
-        call fetch
-        call plus               ; add HERE to the size we kept on the stack
         call dp
         call store
 
