@@ -126,3 +126,11 @@ CHAR 8 ATTR: <INVISIBLE>
   ( use the sure-to-be 0 as SEEK_SET )
   8 SYSCALL/3 (ior)
 ;
+
+: S"  ( "string" -- c-addr )
+  ['] (branch) COMPILE, HERE 0 ,
+  [CHAR] " WORD
+  DUP COUNT + 1 + DP !
+  SWAP HERE SWAP !
+  COUNT SWAP POSTPONE LITERAL POSTPONE LITERAL
+; IMMEDIATE
