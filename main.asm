@@ -1930,10 +1930,6 @@ fill_end:
 filenamestr:
         resb 4096
 
-.colon "HCFILENAME", hcfilename
-        DPUSH hardcodedFilenameStr
-        ret
-
 ;; ( c-addr u fam -- fileid ior )
 .colon "OPEN-FILE", openfile
         call minusrot           ; ( fam c-addr u )
