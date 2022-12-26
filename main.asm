@@ -779,6 +779,7 @@ ugreaterthanorequal_yes:
         ret
 
 .colon '\', backslash, IMM
+;;; '  ; work around nasm-mode highlighting
         DPUSH 10
         call word_
         call drop
