@@ -256,7 +256,7 @@ DICTIONARY:
         add PSP, CELLSIZE*2
         ret
 
-
+;; mostly for internal use
 .colon "PSP", pointerOfNOS
         mov r8, PSP
         sub PSP, CELLSIZE
@@ -337,29 +337,6 @@ differentTrue:
 differentDone:
         add PSP, CELLSIZE
         ret
-
-
-; .colon "<", lesserthan
-;         xor r8, r8
-;         xchg r8, TOS
-;         cmp r8, [PSP]
-;         jg lesserthan_yes
-; lesserthan_done:
-;         ret
-; lesserthan_yes:
-;         mov TOS, -1
-;         jmp lesserthan_done
-
-; .colon ">", greaterthan
-;         xor r8, r8
-;         xchg r8, TOS
-;         cmp r8, [PSP]
-;         jl greaterthan_yes
-; greaterthan_done:
-;         ret
-; greaterthan_yes:
-;         mov TOS, -1
-;         jmp greaterthan_done
 
 
 .colon "<", lesserthan
