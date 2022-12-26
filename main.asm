@@ -450,6 +450,14 @@ ugreaterthanorequal_yes:
         add PSP, CELLSIZE
         ret
 
+.colon "1+", increment
+        inc TOS
+        ret
+
+.colon "1-", decrement
+        dec TOS
+        ret
+
 .colon "*", multiply            ; bit broken but works for reasonable numbers... xD
         imul TOS, [PSP]
         add PSP, CELLSIZE
