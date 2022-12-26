@@ -1979,6 +1979,11 @@ fill_end:
         call fill
         ret
 
+.colon "BLANK", blank             ; ( addr u -- )
+        DPUSH 32
+        call fill
+        ret
+
 filenamestr:
         resb 4096
 
