@@ -109,22 +109,6 @@ align 8
         promptStr db " ok", 10
         promptLen equ $-promptStr
 
-        ; pop r8
-        ; sub rbp, 8
-        ; mov [rbp], r8
-        ; 41 58 48 83 ed 08 4c 89 45 00
-        doesPrelude db 0x41, 0x58, 0x48, 0x83, 0xED, 0x08, 0x4C, 0x89, 0x45, 0x0
-        doesPreludeLen equ $-doesPrelude
-
-        ; mov rax, 0x1122334455667788
-        ; sub rbp, 8
-        ; mov [rbp], rax
-        literalCode db 0x48, 0xb8
-        literalCodeAddressOffset equ $-literalCode
-        db 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11
-        db 0x48, 0x83,  0xed, 0x08, 0x48, 0x89, 0x45, 0x00
-        literalCodeLen equ $-literalCode
-
 ;; here's where these things go, apparently
 SECTION .bss
 align 8
