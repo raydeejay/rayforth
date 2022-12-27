@@ -63,6 +63,9 @@ bits 64
 ;; r8 r9 r10 r11 are scratch registers
 ;; r12 r13 r14 r15 are preserved between calls
 
+;; rcx and r11 are destroyed by syscalls
+;; should change Y to r8 and rewrite?
+
 ;; There's not really a need to respect the System V ABI, but in the
 ;; future we may want to interface with C code. Since there's not
 ;; really a cost to this future-proofing, because we have enough
