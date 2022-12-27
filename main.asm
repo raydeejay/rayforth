@@ -2085,6 +2085,75 @@ filenamestr:
         call lesserthan
         ret
 
+;; ( fileid -- ior )
+.colon "CLOSE-FILE", closefile
+        DPUSH 3
+        call colonsyscall1
+        ret
+
+;; ( addr n -- )
+.colon "INCLUDED", included
+        ; save input specification directly to rstack
+        push qword 4
+        push qword [val_sourceid]
+        push qword [val_TOIN]
+        push qword [val_sourcelen]
+        push qword [val_sourceaddr]
+
+        ; open the file read only
+        DPUSH val_rofam
+        call openfile
+
+        ; ignore errors for now, what could possibly go wrong :-D
+        DPOP r8
+        ; store the source-id
+        DPOP r8
+        mov [val_sourceid], r8
+
+        ; make the file the input source
+        mov qword [val_sourcelen], BUFFERSIZE
+        DPUSH BUFFERSIZE
+        call allocate
+        DPOP r8                 ; ignoring the errors again \o/
+        DPOP r8
+        mov [val_sourceaddr], r8
+
+        ; store a 0 in BLK
+        mov qword [val_blk], 0
+
+        ; repeat until eof: read line, set >in to 0, interpret
+included_next_line:
+        call refill
+        DPOP r8
+        test r8, r8
+        jz included_done
+
+        mov qword [val_TOIN], 0
+        call interpret
+        jmp included_next_line
+
+included_done:
+        ; free buffer
+        mov r8, [val_sourceaddr]
+        DPUSH r8
+        call free
+        DPOP r8                 ; and more error ignoring
+
+        ; close file
+        mov r8, [val_sourceid]
+        DPUSH r8
+        call closefile
+        DPOP r8                 ; and yet some more
+
+        ; restore input specification
+        pop qword [val_sourceaddr]
+        pop qword [val_sourcelen]
+        pop qword [val_TOIN]
+        pop qword [val_sourceid]
+        pop qword r8            ; final error ignoring
+
+        ret
+
 ; last builtin word, for now, this is important because init uses this
 ; word to set up LATEST
 .colon "CREATE", create
