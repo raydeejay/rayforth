@@ -1580,6 +1580,19 @@ printstack_done:
         call period
         ret
 
+.variable "<prompt?>", _promptbool, -1
+
+.colon "<noprompt>", _noprompt
+        DPUSH 0
+        call _promptbool
+        call store
+        ret
+
+.colon "<prompt>", _prompt
+        DPUSH -1
+        call _promptbool
+        call store
+        ret
 
 .colon "QUIT", quit
         ; interpret some words from TIB separated by spaces(!)
@@ -1595,9 +1608,14 @@ printstack_done:
         jmp quit
 
 quit_prompt:
+        mov r8, [val__promptbool]
+        test r8, r8
+        jz quit_prompt_end
+
         DPUSH promptStr
         DPUSH promptLen
         call type
+quit_prompt_end:
         ret
 
 .colon "ALLOT", allot           ; ( n -- )
