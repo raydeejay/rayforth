@@ -4,7 +4,8 @@ ASM=nasm
 LD=ld
 ASMFLAGS=-f elf64
 LDFLAGS=-m elf_x86_64 -s --omagic
-ASMFLAGSDBG=-f elf64 -g -F dwarf
+#ASMFLAGSDBG=-f elf64 -g -F dwarf
+ASMFLAGSDBG=-f elf64 -g
 LDFLAGSDBG=-m elf_x86_64 -g --omagic
 
 .PHONY: clean
