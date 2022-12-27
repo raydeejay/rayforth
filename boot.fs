@@ -143,7 +143,7 @@ CHAR 8 ATTR: <INVISIBLE>
 
 \ fix to make fully compliant...?
 
-: READ-LINE2  ( c-addr u1 fileid -- u2 flag ior )
+: FORTH-READ-LINE  ( c-addr u1 fileid -- u2 flag ior )
   ROT SWAP 0 -ROT            ( u1 0 c-addr fileid )
   BEGIN
     2DUP 1 SWAP              ( u1 0 c-addr fileid c-addr 1 fileid )
@@ -197,6 +197,51 @@ CREATE <STRINGBUFFER> 256 ALLOT
   ['] (S") COMPILE,  [CHAR] " WORD
   COUNT + DP !
 ; IMMEDIATE
+
+\ format is:
+\ TIBDATA len  >IN @  0    4  for stdin
+\ addr len     >IN @  fid  4  for files
+
+: SAVE-INPUT     ( -- xn..x1 n )
+  \ both stdin and file have the same number and kind of args
+  SOURCE  >IN @  SOURCE-ID @  4
+;
+
+: RESTORE-INPUT  ( nx..x1 n -- f )
+  \ both stdin and file have the same number and kind of args
+  DROP
+  SOURCE-ID ! >IN ! <sourcelen> ! <sourceaddr> !
+  TRUE
+;
+
+: FORTH-INCLUDED ( addr n -- )
+  \ save current input specification ( addr size >in source-id n )
+  SAVE-INPUT >R >R >R >R >R
+  \ open the file
+  R/O OPEN-FILE ( ior ) DROP
+  \ store the fid in source-id
+  SOURCE-ID !
+  \ make the file the input source (??)
+  1024 DUP <sourcelen> !
+  ALLOCATE ( ior ) DROP <sourceaddr> !
+
+  \ store 0 in BLK
+  0 BLK !
+
+  \ repeat until eof
+  \   read line into input buffer, set >in to 0,  interpret
+  BEGIN
+    REFILL
+  WHILE
+      0 >IN !  INTERPRET
+  REPEAT
+
+  \ free buffer
+  SOURCE DROP FREE ( ior ) DROP
+  \ close file
+  \ restore input specification
+  R> R> R> R> R> RESTORE-INPUT ( flag ) DROP
+;
 
 : HELLO
   S" boot.fs loaded" TYPE CR
