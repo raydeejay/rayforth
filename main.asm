@@ -1394,27 +1394,6 @@ interpret_end:
         call drop
         ret
 
-;; temporary test word
-.colon "NUM",num
-        DPUSH 789
-        ret
-
-.colon "0",zero
-        DPUSH 0
-        ret
-
-.colon "TWO",two
-        DPUSH 2
-        ret
-
-.colon "TEN",ten
-        DPUSH 10
-        ret
-
-.colon "SIXTEEN",sixteen
-        DPUSH 16
-        ret
-
 .colon ".", period              ; ( n -- )
         ; if 0, just print 0 and exit
         DPOP rax
