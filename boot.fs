@@ -133,7 +133,7 @@ CHAR 8 ATTR: <INVISIBLE>
 : FG  ( n -- )  <ESC> <CSI> 3 .. .. [CHAR] m EMIT ;
 : BG  ( n -- )  <ESC> <CSI> 4 .. .. [CHAR] m EMIT ;
 
-: (ior)  ( n -- n ior ) 0 < ;
+: (ior)  ( n -- ior ) 0 < ;
 
 : READ-FILE  ( c-addr u1 fid -- u2 ior )
   ROT SWAP 0 SYSCALL/3 DUP (ior)
