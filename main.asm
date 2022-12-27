@@ -1532,13 +1532,6 @@ quit_prompt:
         call type
         ret
 
-;; .colon "QUIT", quit
-;;         ; debug loop
-;;         call key
-;;         call emit
-;;         call quit_prompt
-;;         jmp quit
-
 .colon "ALLOT", allot           ; ( n -- )
         ; should clear the space too?
         call dp
