@@ -249,13 +249,13 @@ DICTIONARY:
         sub PSP, CELLSIZE
         xchg [PSP], TOS
         mov TOS, rsp            ; are we returning the right value here...? this is not inlined...
-        add TOS, 8
+        add TOS, CELLSIZE
         ret
 
 .colon "R@", rfetch
         sub PSP, CELLSIZE
         xchg [PSP], TOS
-        mov TOS, [rsp+8]
+        mov TOS, [rsp+CELLSIZE]
         ret
 
 ;; these words become shorter if code is inlined
@@ -629,7 +629,7 @@ ugreaterthanorequal_yes:
 ;; stack manipulation
 
 .colon "DUP", dup               ; ( a -- a a )
-        sub PSP, 8
+        sub PSP, CELLSIZE
         mov [PSP], TOS
         ret
 
@@ -1886,7 +1886,7 @@ zerobranch_backward:
 
 .colon "(loop)", innerloop
         ; increase the loop counter by 1
-        inc qword [rsp+8]
+        inc qword [rsp+CELLSIZE]
         ret
 
 .colon "(enddo)", enddo
@@ -1899,17 +1899,17 @@ zerobranch_backward:
 
 
 .colon "I", i
-        mov r8, [rsp+8]
+        mov r8, [rsp+CELLSIZE]
         DPUSH r8
         ret
 
 .colon "J", j
-        mov r8, [rsp+24]
+        mov r8, [rsp+CELLSIZE*3]
         DPUSH r8
         ret
 
 .colon "(limit)", dolimit
-        mov r8, [rsp+16]
+        mov r8, [rsp+CELLSIZE*2]
         DPUSH r8
         ret
 
@@ -2141,7 +2141,7 @@ end_of_dictionary:
 
 ;; the program code here
 SECTION .text
-align 8
+align CELLSIZE
 
 global _start
 
