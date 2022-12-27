@@ -103,17 +103,11 @@ align 8
         helloStr db "RayForth v0", 10
         helloLen equ $-helloStr
 
-        keytestStr db "Press a key and it will be printed back", 10
-        keytestStrLen equ $-keytestStr
-
         notFoundMsgStr db " not found"
         notFoundMsgLen equ $-notFoundMsgStr
 
         promptStr db " ok", 10
         promptLen equ $-promptStr
-
-        hardcodedFilenameStr db 7, "boot.fs"
-        hardcodedFilenameLen equ $-hardcodedFilenameStr
 
         ; pop r8
         ; sub rbp, 8
