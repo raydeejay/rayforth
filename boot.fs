@@ -195,7 +195,7 @@ CREATE <STRINGBUFFER> 256 ALLOT
 : S"  ( "string" -- addr n )
   STATE @ 0= IF  <S">  EXIT THEN
   ['] (S") COMPILE,  [CHAR] " WORD
-  HERE COUNT + DP !
+  COUNT + DP !
 ; IMMEDIATE
 
 : HELLO
