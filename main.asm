@@ -2091,7 +2091,7 @@ filenamestr:
 
 ;; ( fileid -- ior )
 .colon "CLOSE-FILE", closefile
-        DPUSH 3
+        DPUSH 3                 ; close(fd)
         call colonsyscall1
         ret
 
@@ -2137,6 +2137,7 @@ included_next_line:
         jmp included_next_line
 
 included_done:
+        call drop               ; not sure why....
         ; free buffer
         mov r8, [val_sourceaddr]
         DPUSH r8
