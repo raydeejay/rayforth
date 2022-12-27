@@ -1456,6 +1456,7 @@ interpret_not_found:
 
         ; should clear the stack pointers... or is that QUIT's job?
         ;jmp interpret_end
+        call warm
         ret
 
 interpret_end:
@@ -2262,6 +2263,7 @@ warm:
         rep stosb
 
         mov PSP, DATASTACKBOTTOM
+        xor TOS, TOS
 
         ret
 
