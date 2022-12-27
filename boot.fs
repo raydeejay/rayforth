@@ -139,6 +139,29 @@ CHAR 8 ATTR: <INVISIBLE>
   ROT SWAP 0 SYSCALL/3 DUP (ior)
 ;
 
+\ fix to make fully compliant...?
+
+: READ-LINE2  ( c-addr u1 fileid -- u2 flag ior )
+  ROT SWAP 0 -ROT            ( u1 0 c-addr fileid )
+  BEGIN
+    2DUP 1 SWAP              ( u1 0 c-addr fileid c-addr 1 fileid )
+    READ-FILE ( u1 0 c-addr fileid u2 ior )
+    IF  >R 2DROP 2DROP R> DUP TRUE EXIT  THEN DROP
+    ( u1 0 c-addr fileid u2 )
+  WHILE  ( u1 0 c-addr fileid )                          \ if no chars read, exit
+      OVER C@ 10 =  IF  2DROP NIP TRUE FALSE EXIT  THEN  \ if newline exit
+      1 UNDER+ 2SWAP 1+ ( c-addr+1 fileid u1 0+1 )
+      2DUP =  IF  DROP -ROT 2DROP TRUE FALSE EXIT  THEN   \ if max chars exit
+      2SWAP             ( u1 0+1 c-addr+1 fileid )
+
+      SWAP COUNT 10 =  IF  2DROP NIP TRUE FALSE EXIT  THEN  \ if newline exit
+      SWAP 2SWAP 1+     ( c-addr+1 fileid u1 0+1 )
+      2DUP =  IF  DROP -ROT 2DROP TRUE FALSE EXIT  THEN   \ if max chars exit
+      2SWAP             ( u1 0+1 c-addr+1 fileid )
+  REPEAT
+  2DROP 2DROP 0 FALSE FALSE
+;
+
 : FILE-POSITION  ( fid -- ud ior )
   1 0 ROT 8 SYSCALL/3 S>D DUP (ior)
 ;
