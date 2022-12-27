@@ -802,6 +802,58 @@ ugreaterthanorequal_yes:
         call drop
         ret
 
+;; ( c-addr u1 fileid -- u2 flag ior )
+.colon "READ-LINE", readline
+        DPOP W                  ; fid
+        DPOP X                  ; max
+        xor r8, r8              ; count
+        DPOP r9                 ; c-addr
+
+readline_next_char:
+        cmp r8, X
+        je readline_done
+
+        DPUSH 1
+        DPUSH r9
+        DPUSH W
+        DPUSH 0                 ; read syscall
+        call colonsyscall3
+        DPOP rax
+
+        ;; rax holds size (0/1) or -errno
+        test rax, rax
+        ;; exit when either error
+        js readline_error
+        ;; or EOF
+        jz readline_eof
+
+        ;; if newline then done
+        cmp byte [r9], 10
+        je readline_done
+
+        ;; move to next char
+        inc r9
+        inc r8
+        jmp readline_next_char
+
+readline_done:
+        DPUSH r8
+        DPUSH -1
+        DPUSH 0
+        ret
+
+readline_eof:
+        DPUSH r8
+        DPUSH 0
+        DPUSH 0
+        ret
+
+readline_error:
+        DPUSH r8
+        DPUSH r8                ; return values don't matter
+        DPUSH -1                ; and ior
+        ret
+
 .variable "SOURCE-ID", sourceid, 0
 
 .colon "REFILL", refill
