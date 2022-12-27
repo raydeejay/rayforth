@@ -179,7 +179,7 @@ CHAR 8 ATTR: <INVISIBLE>
 ;
 
 \ only one buffer for now
-CREATE <STRINGBUFFER> 4096 ALLOT
+CREATE <STRINGBUFFER> 256 ALLOT
 
 : <S">  ( "string" -- addr n )
   [CHAR] " WORD
