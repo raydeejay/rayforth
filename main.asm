@@ -2118,7 +2118,7 @@ filenamestr:
 end_of_builtins:
 ;; should I add a blob of uninitialised (or initialised) space here?
 
-        resb 16384
+        resb 65536
 end_of_dictionary:
 
 ;; the program code here
