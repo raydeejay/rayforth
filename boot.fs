@@ -1,7 +1,5 @@
 #! /home/raydj/forth/rayforth/rayforth-launcher
 
-<noprompt>
-
 ( this is a test flag )
 \ 1234567890
 
@@ -245,8 +243,7 @@ CREATE <STRINGBUFFER> 256 ALLOT
 
 : HELLO
   S" boot.fs loaded" TYPE CR
-  UNUSED . S" bytes available" TYPE
-  <prompt>
+  UNUSED . S" bytes available" TYPE CR
 ;
 
 HELLO

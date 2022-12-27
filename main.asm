@@ -109,6 +109,9 @@ align 8
         promptStr db " ok", 10
         promptLen equ $-promptStr
 
+        bootfsStr db "boot.fs"
+        bootfsLen equ $-bootfsStr
+
 ;; here's where these things go, apparently
 SECTION .bss
 align 8
@@ -2268,10 +2271,15 @@ init:
         mov qword [rsi], end_of_builtins
         mov rsi, val_latest
         mov qword [rsi], create_entry ; THIS HAS TO BE MANUALLY UPDATED...(!)
+        ret
 
-        ; load boot.fs
-
-
+loadbootfs:
+        DPUSH bootfsStr
+        DPUSH bootfsLen
+        mov qword [val__promptbool], 0
+        call included
+        mov qword [val__promptbool], 1
+        call quit_prompt
         ret
 
 
@@ -2300,6 +2308,7 @@ hello:
 _start:
         call init
         call hello
+        call loadbootfs
         call quit
         ;call display
         jmp coda
