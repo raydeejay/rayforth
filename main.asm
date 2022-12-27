@@ -832,8 +832,19 @@ readline_error:
         DPUSH -1                ; and ior
         ret
 
+.variable "<sourceaddr>", sourceaddr, TIBDATA
+.variable "<sourcelen>", sourcelen, BUFFERSIZE
 .variable "SOURCE-ID", sourceid, 0
+.variable "BLK", blk, 0
 
+.colon "SOURCE", source
+        mov r8, [val_sourceaddr]
+        mov r9, [val_sourcelen]
+        DPUSH r8
+        DPUSH r9
+        ret
+
+;; ( -- f )
 .colon "REFILL", refill
         mov r8, [val_sourceid]
         cmp r8, -1
