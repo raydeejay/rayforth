@@ -1570,6 +1570,39 @@ period_done2:
         ret
 
 
+.colon ".S", printstack
+        DPUSH ' '
+        DPUSH '['
+        call emit
+        call emit
+        DPUSH 0              ; inject a 0 to move TOS down into memory
+        mov W, DATASTACKBOTTOM-CELLSIZE ; address of bottom cell on W
+        mov X, DATASTACKBOTTOM-CELLSIZE
+        sub X, PSP
+        shr X, 3                ; divide by 8, DEPTH on X
+
+printstack_next_deepest:
+        cmp W, PSP
+        jl printstack_done
+
+        mov r8, [W]
+        DPUSH r8
+        call period
+        sub W, CELLSIZE
+        jmp printstack_next_deepest
+
+printstack_done:
+        DPOP r8                 ; clear the injected 0
+        DPUSH ' '
+        DPUSH ']'
+        call emit
+        call emit
+        inc X
+        DPUSH X
+        call period
+        ret
+
+
 .colon "QUIT", quit
         ; interpret some words from TIB separated by spaces(!)
         call refill
