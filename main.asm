@@ -867,28 +867,32 @@ readline_error:
         mov al, ' '
         rep stosb
 
-        ; read a... line?
-        DPUSH BUFFERSIZE
+        ; read a... line
         DPUSH TIBDATA
+        DPUSH BUFFERSIZE
         mov r8, [val_sourceid]
         DPUSH r8
-        DPUSH 0
-        call colonsyscall3
-        DPOP rax
+        call readline
 
-        ; rax holds size or -errno
-        test rax, rax
-        ;; exit when either error or EOF :-)
-        js refill_error
+        DPOP W                  ; test ior
+        test W, W
+        js refill_error2
+
+        DPOP X                  ; test flag
+        test X, X
         jz refill_error
 
+refill_done:
         ; no error, reset >IN and return true
+        DPOP r8
         DPUSH 0
         call TIBIN
         call store
         DPUSH -1
         ret
 
+refill_error2:
+        DPOP r8
 refill_error:
         DPUSH 0                 ; return false
         ret
