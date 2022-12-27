@@ -946,8 +946,8 @@ maybe_newline:
 
 word_check_end:
         ; if we went over the end of TIBDATA, we're done
-        cmp rsi, TIBDATA+BUFFERSIZE
-        je tibdata_was_empty
+        cmp rsi, TIBDATA+BUFFERSIZE-1
+        jge tibdata_was_empty
 
         ;; otherwise continue
         jmp word_skip_delimiters
@@ -991,7 +991,8 @@ find_closing_delimiter:
         je found_closing_delimiter
 
         ; if we went over the end of TIBDATA, return right away
-        cmp rsi, TIBDATA+BUFFERSIZE
+        ; address A holding size S gives a max address of A+S-1
+        cmp rsi, TIBDATA+BUFFERSIZE-1
         je found_closing_delimiter
 
         ;; otherwise move along to the next char
