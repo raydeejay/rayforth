@@ -747,7 +747,7 @@ ugreaterthanorequal_yes:
 .variable "STATE", state, 0     ; 0 interpret, 1 compile
 .variable "LATEST", latest, 0
 .variable "TIB", TIB, TIBDATA
-.variable ">IN", TIBIN, 0
+.variable ">IN", TOIN, 0
 
 .variable "DP", dp, 0
 .colon "HERE", here
@@ -851,16 +851,22 @@ readline_error:
         je refill_error
 
         ; clear the input buffer
-        mov rdi, TIBDATA
-        mov rcx, BUFFERSIZE
+        ; mov rdi, TIBDATA
+        ; mov rcx, BUFFERSIZE
+        mov rdi, [val_sourceaddr]
+        mov rcx, [val_sourcelen]
         mov al, ' '
         rep stosb
 
         ; read a... line
-        DPUSH TIBDATA
-        DPUSH BUFFERSIZE
-        mov r8, [val_sourceid]
+        ; DPUSH TIBDATA
+        ; DPUSH BUFFERSIZE
+        mov r8, [val_sourceaddr]
+        mov r9, [val_sourcelen]
+        mov r10, [val_sourceid]
         DPUSH r8
+        DPUSH r9
+        DPUSH r10
         call readline
 
         DPOP W                  ; test ior
@@ -875,7 +881,7 @@ refill_done:
         ; no error, reset >IN and return true
         DPOP r8
         DPUSH 0
-        call TIBIN
+        call TOIN
         call store
         DPUSH -1
         ret
@@ -903,9 +909,11 @@ refill_error:
         ret
 
 .colon "WORD", word_
-        call TIB
-        call fetch
-        call TIBIN
+        ; call TIB
+        ; call fetch
+        mov r8, [val_sourceaddr]
+        DPUSH r8
+        call TOIN
         call fetch
         call plus
 
@@ -939,7 +947,11 @@ maybe_newline:
 
 word_check_end:
         ; if we went over the end of TIBDATA, we're done
-        cmp rsi, TIBDATA+BUFFERSIZE-1
+        ; cmp rsi, TIBDATA+BUFFERSIZE-1
+        mov r8, [val_sourceaddr]
+        add r8, [val_sourcelen]
+        dec r8
+        cmp rsi, r8
         jge tibdata_was_empty
 
         ;; otherwise continue
@@ -983,9 +995,13 @@ find_closing_delimiter:
         cmpsb
         je found_closing_delimiter
 
-        ; if we went over the end of TIBDATA, return right away
+        ; if we went over the end of input_buffer, return right away
         ; address A holding size S gives a max address of A+S-1
-        cmp rsi, TIBDATA+BUFFERSIZE-1
+        ; cmp rsi, TIBDATA+BUFFERSIZE-1
+        mov r8, [val_sourceaddr]
+        add r8, [val_sourcelen]
+        dec r8
+        cmp rsi, r8
         je found_closing_delimiter
 
         ;; otherwise move along to the next char
@@ -993,11 +1009,11 @@ find_closing_delimiter:
 
 found_closing_delimiter:
         ; update >IN
-        ; with the difference between end of parsing and TIBDATA
+        ; with the difference between end of parsing and end of input bufer
         mov W, rsi
-        sub W, TIBDATA
+        sub W, [val_sourceaddr]
         DPUSH W
-        call TIBIN
+        call TOIN
         call store
 
         ; we have the end, calculate the length now
