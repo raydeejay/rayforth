@@ -1076,43 +1076,9 @@ find_check_lengths:
         and dl, IMM
         xor cl, dl
         cmp bl, cl
-
         je find_check_names
 
-        ; if not the same, next word
-        ; follow the link
-        mov Y, [Y]
-        mov rdi, Y
-
-        ; if the link is 0, not found
-        test rdi, rdi
-        jz find_not_found
-
-        ; otherwise repeat the process
-        jmp find_setup
-
-find_check_names:
-        ; count is still loaded on bl and cl
-        ; advance the pointers over the counts
-        inc rsi
-        inc rdi
-
-        ; if no chars left (-1), they're equal, we're done
-        dec cl
-        js find_word_found
-
-        ; compare strings, count is already loaded in cl/rcx
-        mov r8b, byte [rsi]
-        cmp r8b, byte [rdi]
-
-        ; if they're equal keep checking
-        je find_check_names
-
-        ; retry with toggled case
-        xor r8b, 0b00100000
-        cmp r8b, byte [rdi]
-        je find_check_names
-
+find_next_link:
         ; if they're different move to the next link
         mov Y, [Y]
         mov rdi, Y
@@ -1123,6 +1089,37 @@ find_check_names:
 
         ; else check the next entry
         jmp find_setup
+
+find_check_names:
+        ; count is still loaded on bl and cl
+        ; advance the pointers over the counts
+        inc rsi
+        inc rdi
+
+        ; if no chars left (-1), they're equal, we're done
+        dec rcx
+        js find_word_found
+
+        ; compare strings, count is already loaded in cl/rcx
+        mov r8b, byte [rsi]
+        mov r9b, byte [rdi]
+        cmp r8b, r9b
+
+        ; if they're equal keep checking
+        je find_check_names
+
+        ; retry with toggled case (but only if it's a letter!!)
+        or r8b, 0b00100000      ; force "lowercase"
+        sub r8b, 'a'            ; convert to 0-25
+        cmp r8b, 'z'-'a'        ; check if it is a letter
+        ja find_next_link
+
+        or r9b, 0b00100000      ; force lowercase on dict letter
+        sub r9b, 'a'            ; convert, no need for checks here
+        cmp r8b, r9b
+        je find_check_names
+
+        jmp find_next_link
 
 find_not_found:
         ; return c-addr and 0
