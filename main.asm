@@ -1097,12 +1097,9 @@ find_check_names:
         inc rsi
         inc rdi
 
-        ; if no chars left, they're equal, we're done
+        ; if no chars left (-1), they're equal, we're done
         dec cl
-        ; test rcx, rcx
-        ; js find_word_found
-        cmp cl, -1
-        je find_word_found
+        js find_word_found
 
         ; compare strings, count is already loaded in cl/rcx
         mov r8b, byte [rsi]
