@@ -1097,11 +1097,24 @@ find_check_names:
         inc rsi
         inc rdi
 
-        ; compare strings, count is already loaded in cl/rcx
-        repe cmpsb
-
-        ; if they're equal we found a word
+        ; if no chars left, they're equal, we're done
+        dec cl
+        ; test rcx, rcx
+        ; js find_word_found
+        cmp cl, -1
         je find_word_found
+
+        ; compare strings, count is already loaded in cl/rcx
+        mov r8b, byte [rsi]
+        cmp r8b, byte [rdi]
+
+        ; if they're equal keep checking
+        je find_check_names
+
+        ; retry with toggled case
+        xor r8b, 0b00100000
+        cmp r8b, byte [rdi]
+        je find_check_names
 
         ; if they're different move to the next link
         mov Y, [Y]
