@@ -67,6 +67,7 @@
     COUNT  $7F AND  TYPE BL EMIT
     @ DUP 0<>
   UNTIL
+  DROP
 ;
 
 ( print the test flag )
