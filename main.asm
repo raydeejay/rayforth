@@ -123,13 +123,13 @@ align 8
 ;; Parameter Stack Macros
 %macro DPUSH 1
         sub PSP, CELLSIZE
-        mov qword [PSP], qword %1
-        xchg TOS, [PSP]
+        mov qword [PSP], TOS
+        mov TOS, qword %1
 %endmacro
 
 %macro DPOP 1
-        xchg TOS, [PSP]
-        mov qword %1, qword [PSP]
+        mov qword %1, TOS
+        mov TOS, [PSP]
         add PSP, CELLSIZE
 %endmacro
 
@@ -209,34 +209,32 @@ DICTIONARY:
 .colon "!",store
         mov r8, [PSP]
         mov [TOS], r8
-        xchg TOS, [PSP+CELLSIZE]
+        mov TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
         ret
 
 .colon "+!",plusstore
         mov r8, [PSP]
         add [TOS], r8
-        xchg TOS, [PSP+CELLSIZE]
+        mov TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
         ret
 
 .colon "C@", cfetch
-        xor r8, r8
-        xchg r8, TOS
-        mov r15b, [r8]
+        movzx TOS, byte [TOS]
         ret
 
 .colon "C!", cstore
-        mov r8, [PSP]
+        movzx r8, byte [PSP]
         mov byte [TOS], r8b
-        xchg TOS, [PSP+CELLSIZE]
+        mov TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
         ret
 
 .colon "C+!", cplusstore
-        mov r8, [PSP]
+        movzx r8, byte [PSP]
         add byte [TOS], r8b
-        xchg TOS, [PSP+CELLSIZE]
+        mov TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
         ret
 
@@ -250,14 +248,13 @@ DICTIONARY:
 
 .colon "RP@", rpFetch
         sub PSP, CELLSIZE
-        xchg [PSP], TOS
-        mov TOS, rsp            ; are we returning the right value here...? this is not inlined...
-        add TOS, CELLSIZE
-        ret
+        mov [PSP], TOS
+        mov TOS, rsp
+        add TOS, CELLSIZE  ; return value under this function's return
 
 .colon "R@", rfetch
         sub PSP, CELLSIZE
-        xchg [PSP], TOS
+        mov [PSP], TOS
         mov TOS, [rsp+CELLSIZE]
         ret
 
@@ -278,150 +275,110 @@ DICTIONARY:
 
 
 .colon "0=", zeroEqual
-        test TOS, TOS
-        jz zeroEqualTrue
-zeroEqualFalse:
-        mov TOS, 0
-        ret
-zeroEqualTrue:
-        mov TOS, -1
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        test r8, r8
+        cmovz TOS, W
         ret
 
 .colon "0<>", zeroNotEqual
-        test TOS, TOS
-        jnz zeroNotEqualTrue
-zeroNotEqualFalse:
-        mov TOS, 0
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        test r8, r8
+        cmovnz TOS, W
         ret
-zeroNotEqualTrue:
-        mov TOS, -1
-        ret
-
 
 .colon "=", equal
-        cmp TOS, [PSP]
-        je equalTrue
-equalFalse:
-        mov TOS, 0
-        jmp equalDone
-equalTrue:
-        mov TOS, -1
-equalDone:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmove TOS, W
         add PSP, CELLSIZE
         ret
 
 .colon "<>", different
-        cmp TOS, [PSP]
-        jne differentTrue
-differentFalse:
-        mov TOS, 0
-        jmp differentDone
-differentTrue:
-        mov TOS, -1
-differentDone:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmovne TOS, W
         add PSP, CELLSIZE
         ret
-
 
 .colon "<", lesserthan
-        xor r8, r8
-        xchg r8, TOS
-        cmp r8, [PSP]
-        jg lesserthan_yes
-lesserthan_done:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmovl TOS, W
         add PSP, CELLSIZE
         ret
-lesserthan_yes:
-        mov TOS, -1
-        jmp lesserthan_done
 
 .colon ">", greaterthan
-        xor r8, r8
-        xchg r8, TOS
-        cmp r8, [PSP]
-        jl greaterthan_yes
-greaterthan_done:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmovg TOS, W
         add PSP, CELLSIZE
         ret
-greaterthan_yes:
-        mov TOS, -1
-        jmp greaterthan_done
-
 
 .colon "<=", lesserthanorequal
-        xor r8, r8
-        xchg r8, TOS
-        cmp r8, [PSP]
-        jge lesserthanorequal_yes
-lesserthanorequal_done:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmovle TOS, W
         add PSP, CELLSIZE
         ret
-lesserthanorequal_yes:
-        mov TOS, -1
-        jmp lesserthanorequal_done
 
 .colon ">=", greaterthanorequal
-        xor r8, r8
-        xchg r8, TOS
-        cmp r8, [PSP]
-        jle greaterthanorequal_yes
-greaterthanorequal_done:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmovge TOS, W
         add PSP, CELLSIZE
         ret
-greaterthanorequal_yes:
-        mov TOS, -1
-        jmp greaterthanorequal_done
-
 
 .colon "U<", ulesserthan
-        xor r8, r8
-        xchg r8, TOS
-        cmp r8, [PSP]
-        ja ulesserthan_yes
-ulesserthan_done:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmovb TOS, W
         add PSP, CELLSIZE
         ret
-ulesserthan_yes:
-        mov TOS, -1
-        jmp ulesserthan_done
 
 .colon "U>", ugreaterthan
-        xor r8, r8
-        xchg r8, TOS
-        cmp r8, [PSP]
-        jb ugreaterthan_yes
-ugreaterthan_done:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmova TOS, W
         add PSP, CELLSIZE
         ret
-ugreaterthan_yes:
-        mov TOS, -1
-        jmp ugreaterthan_done
-
 
 .colon "U<=", ulesserthanorequal
-        xor r8, r8
-        xchg r8, TOS
-        cmp r8, [PSP]
-        jae ulesserthanorequal_yes
-ulesserthanorequal_done:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmovbe TOS, W
         add PSP, CELLSIZE
         ret
-ulesserthanorequal_yes:
-        mov TOS, -1
-        jmp ulesserthanorequal_done
 
 .colon "U>=", ugreaterthanorequal
-        xor r8, r8
-        xchg r8, TOS
-        cmp r8, [PSP]
-        jbe ugreaterthanorequal_yes
-ugreaterthanorequal_done:
+        mov r8, TOS
+        xor TOS, TOS
+        mov W, -1
+        cmp [PSP], r8
+        cmovae TOS, W
         add PSP, CELLSIZE
         ret
-ugreaterthanorequal_yes:
-        mov TOS, -1
-        jmp ugreaterthanorequal_done
-
 
 .colon "+", plus
         add TOS, [PSP]
@@ -429,8 +386,8 @@ ugreaterthanorequal_yes:
         ret
 
 .colon "-", minus
-        xchg TOS, [PSP]
-        sub TOS, [PSP]
+        sub [PSP], TOS
+        mov TOS, [PSP]
         add PSP, CELLSIZE
         ret
 
@@ -644,23 +601,29 @@ ugreaterthanorequal_yes:
         ret
 
 .colon "SWAP", swap             ; ( a b -- b a )
-        xchg [PSP], TOS
+        mov r8, TOS
+        mov TOS, [PSP]
+        mov [PSP], r8
         ret
 
 .colon "2SWAP", _2swap             ; ( a b c d -- c d a b )
-        xchg [PSP+CELLSIZE], TOS
         mov r8, [PSP+CELLSIZE*2]
-        xchg [PSP], r8
-        mov [PSP+CELLSIZE*2], r8
+        mov r9, [PSP]
+        mov [PSP], r8
+        mov [PSP+CELLSIZE*2], r9
+        mov r11, TOS
+        mov r12, [PSP+CELLSIZE]
+        mov [PSP+CELLSIZE], r11
+        mov TOS, r12
         ret
 
 .colon "DROP", drop             ; ( a -- )
-        xchg [PSP], TOS
+        mov TOS, [PSP]
         add PSP, CELLSIZE
         ret
 
 .colon "2DROP", _2drop             ; ( a b -- )
-        xchg [PSP+CELLSIZE], TOS
+        mov TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
         ret
 
@@ -681,26 +644,27 @@ ugreaterthanorequal_yes:
         add PSP, CELLSIZE
         ret
 
-.colon "TUCK", tuck             ; ( a b c -- b a b )
-        ; a | b
-        xchg [PSP], TOS         ; b | a
-        sub PSP, CELLSIZE       ; b ? | a
-        mov [PSP], TOS          ; b a | a
-        mov TOS, [PSP+CELLSIZE] ; b a | b
+.colon "TUCK", tuck             ; ( a b -- b a b )
+        mov r8, [PSP]
+        sub PSP, CELLSIZE
+        mov [PSP], r8
+        mov [PSP+CELLSIZE], TOS
         ret
 
 .colon "ROT", rot               ; ( a b c -- b c a )
-        DPOP r8
-        call swap
-        sub PSP, CELLSIZE
-        mov [PSP], r8
+        mov r8, [PSP]
+        mov r9, [PSP+CELLSIZE]
+        mov [PSP], TOS
+        mov [PSP+CELLSIZE], r8
+        mov TOS, r9
         ret
 
 .colon "-ROT", minusrot         ; ( a b c -- c a b )
         mov r8, [PSP]
-        add PSP, CELLSIZE
-        xchg [PSP], TOS
-        DPUSH r8
+        mov r9, [PSP+CELLSIZE]
+        mov [PSP+CELLSIZE], TOS
+        mov [PSP], r9
+        mov TOS, r8
         ret
 
 .colon "PICK", pick
@@ -710,11 +674,9 @@ ugreaterthanorequal_yes:
         ret
 
 .colon "ROLL", roll
-        ; keeping the index (or something) on TOS, we can rotate the
-        ; elements and then advance PSP at the end to get rid of the
-        ; second-on-stack, getting the correct value on TOS and on
-        ; second-on-stack
-        xchg r8, TOS
+        ; all the elements to be rotated are on the PSP area,
+        ; TOS holds the index, overwrite it with the final value
+        mov r8, TOS
         mov r9, r8
         shl r9, 3               ; cell size is 8
         add r9, PSP
@@ -729,7 +691,7 @@ ugreaterthanorequal_yes:
         std
         rep movsq
         cld
-        ; finally adjust the stack pointer to get rid of previous TOS
+        ; finally adjust the stack pointer since we consumed the index
         add PSP, CELLSIZE
         ret
 
@@ -1484,19 +1446,15 @@ interpret_end:
         test rax, rax
         jns period_begin_process
 
-        xchg rax, r8
+        mov W, rax
         DPUSH '-'
-        push rax
-        push r8
         call emit
-        pop r8
-        pop rax
-        xchg rax, r8
-        ; then negate then number and print it normally
+        mov rax, W
+        ; then negate the number and print it normally
         neg rax
 
 period_begin_process:
-        xor r8, r8
+        xor W, W
 
 period_process_digit:
         xor rdx, rdx
@@ -1505,16 +1463,14 @@ period_process_digit:
         add rdx, DIGITS            ; make a letter
         mov rdx, [rdx]
         DPUSH byte rdx
-        inc r8
+        inc W
         test rax, rax
         jnz period_process_digit
 
 period_emit_digit:
         ; no more digits, print them back from the stack
-        push r8
         call emit
-        pop r8
-        dec r8
+        dec W
         jnz period_emit_digit
 
         jmp period_done
@@ -1543,19 +1499,15 @@ period_done:
         test rax, rax
         jns period_begin_process2
 
-        xchg rax, r8
+        mov W, rax
         DPUSH '-'
-        push rax
-        push r8
         call emit
-        pop r8
-        pop rax
-        xchg rax, r8
+        mov rax, W
         ; then negate then number and print it normally
         neg rax
 
 period_begin_process2:
-        xor r8, r8
+        xor W, W
 
 period_process_digit2:
         xor rdx, rdx
@@ -1564,16 +1516,14 @@ period_process_digit2:
         add rdx, DIGITS            ; make a letter
         mov rdx, [rdx]
         DPUSH byte rdx
-        inc r8
+        inc W
         test rax, rax
         jnz period_process_digit2
 
 period_emit_digit2:
         ; no more digits, print them back from the stack
-        push r8
         call emit
-        pop r8
-        dec r8
+        dec W
         jnz period_emit_digit2
 
         jmp period_done2
