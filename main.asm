@@ -457,6 +457,16 @@ DICTIONARY:
         add PSP, CELLSIZE
         ret
 
+.colon "ABS", _abs
+        mov r8, TOS
+        neg r8
+        cmovns TOS, r8
+        ret
+
+.colon "NEGATE", negate
+        neg TOS
+        ret
+
 .colon "NAND", nand_
         and TOS, [PSP]
         not TOS
@@ -488,6 +498,10 @@ DICTIONARY:
 .colon "XOR", xor_
         xor TOS, [PSP]
         add PSP, CELLSIZE
+        ret
+
+.colon "INVERT", invert
+        not TOS
         ret
 
 
