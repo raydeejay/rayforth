@@ -1542,19 +1542,19 @@ period_done2:
         call emit
         call emit
         DPUSH 0              ; inject a 0 to move TOS down into memory
-        mov W, DATASTACKBOTTOM-CELLSIZE ; address of bottom cell on W
+        mov r9, DATASTACKBOTTOM-CELLSIZE ; address of bottom cell on r9
         mov X, DATASTACKBOTTOM-CELLSIZE
         sub X, PSP
         shr X, 3                ; divide by 8, DEPTH on X
 
 printstack_next_deepest:
-        cmp W, PSP
+        cmp r9, PSP
         jl printstack_done
 
-        mov r8, [W]
+        mov r8, [r9]
         DPUSH r8
         call period
-        sub W, CELLSIZE
+        sub r9, CELLSIZE
         jmp printstack_next_deepest
 
 printstack_done:
