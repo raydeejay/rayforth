@@ -134,6 +134,16 @@ align 8
         add PSP, CELLSIZE
 %endmacro
 
+%macro CLR 1
+        xor %1, %1
+%endmacro
+
+%macro DUP 0
+        sub PSP, CELLSIZE
+        mov [PSP], TOS
+%endmacro
+
+%define NIP add PSP, CELLSIZE
 
 ;; Other memory zones
 PADDATA:
@@ -242,8 +252,7 @@ DICTIONARY:
 ;; mostly for internal use
 .colon "PSP", pointerOfNOS
         mov r8, PSP
-        sub PSP, CELLSIZE
-        mov [PSP], TOS
+        DUP
         mov TOS, r8
         ret
 
@@ -254,8 +263,7 @@ DICTIONARY:
         add TOS, CELLSIZE  ; return value under this function's return
 
 .colon "R@", rfetch
-        sub PSP, CELLSIZE
-        mov [PSP], TOS
+        DUP
         mov TOS, [rsp+CELLSIZE]
         ret
 
@@ -277,7 +285,7 @@ DICTIONARY:
 
 .colon "0=", zeroEqual
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         test r8, r8
         cmovz TOS, W
@@ -285,7 +293,7 @@ DICTIONARY:
 
 .colon "0<>", zeroNotEqual
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         test r8, r8
         cmovnz TOS, W
@@ -293,103 +301,103 @@ DICTIONARY:
 
 .colon "=", equal
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmove TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "<>", different
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmovne TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "<", lesserthan
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmovl TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon ">", greaterthan
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmovg TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "<=", lesserthanorequal
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmovle TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon ">=", greaterthanorequal
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmovge TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "U<", ulesserthan
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmovb TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "U>", ugreaterthan
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmova TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "U<=", ulesserthanorequal
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmovbe TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "U>=", ugreaterthanorequal
         mov r8, TOS
-        xor TOS, TOS
+        CLR TOS
         mov W, -1
         cmp [PSP], r8
         cmovae TOS, W
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "+", plus
         add TOS, [PSP]
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "-", minus
         sub [PSP], TOS
         mov TOS, [PSP]
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "1+", increment
@@ -402,7 +410,7 @@ DICTIONARY:
 
 .colon "*", multiply            ; bit broken but works for reasonable numbers... xD
         imul TOS, [PSP]
-        add PSP, CELLSIZE
+        NIP
         ret
 
 ;; Signed divide RDX:RAX by r/m64, with result stored in
@@ -431,7 +439,7 @@ DICTIONARY:
         mov rax, [PSP]
         idiv TOS
         mov TOS, rax
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "MOD", mod
@@ -439,7 +447,7 @@ DICTIONARY:
         mov rax, [PSP]
         idiv TOS
         mov TOS, rdx
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "MIN", min
@@ -471,34 +479,34 @@ DICTIONARY:
 .colon "NAND", nand_
         and TOS, [PSP]
         not TOS
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "NOR", nor_
         or TOS, [PSP]
         not TOS
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "XNOR", xnor_
         xor TOS, [PSP]
         not TOS
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "AND", and_
         and TOS, [PSP]
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "OR", or_
         or TOS, [PSP]
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "XOR", xor_
         xor TOS, [PSP]
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "INVERT", invert
@@ -640,8 +648,7 @@ DICTIONARY:
 ;; stack manipulation
 
 .colon "DUP", dup               ; ( a -- a a )
-        sub PSP, CELLSIZE
-        mov [PSP], TOS
+        DUP
         ret
 
 .colon "2DUP", _2dup               ; ( a b -- a b a b )
@@ -670,7 +677,7 @@ DICTIONARY:
 
 .colon "DROP", drop             ; ( a -- )
         mov TOS, [PSP]
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "2DROP", _2drop             ; ( a b -- )
@@ -692,7 +699,7 @@ DICTIONARY:
         ret
 
 .colon "NIP", nip               ; ( a b -- b )
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "TUCK", tuck             ; ( a b -- b a b )
@@ -743,7 +750,7 @@ DICTIONARY:
         rep movsq
         cld
         ; finally adjust the stack pointer since we consumed the index
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "CR", cr
@@ -1927,9 +1934,8 @@ zerobranch_backward:
 
 .colon "(loop)", innerloop
         ; inject a false result by default
-        sub PSP, CELLSIZE
-        mov [PSP], TOS
-        xor TOS, TOS
+        DUP
+        CLR TOS
         mov Y, -1
         ; increase the loop counter by 1
         mov W, [rsp+CELLSIZE]
@@ -1946,7 +1952,8 @@ zerobranch_backward:
 .colon "(+loop)", innerplusloop
         ; move TOS to r8, inject a false result by default
         mov r8, TOS
-        xor TOS, TOS
+        DUP
+        CLR TOS
         mov Y, -1
         ; increase the loop counter by r8 (positive or negative)
         mov W, [rsp+CELLSIZE]
@@ -2036,7 +2043,7 @@ innerplusloopdone:
         add r8, CELLSIZE
         mov [PSP], r8
         ; and replace TOS with a 0
-        xor TOS, TOS
+        CLR TOS
 allocate_end:
         ret
 
@@ -2077,7 +2084,7 @@ allocate_end:
         add r8, CELLSIZE
         mov [PSP], r8
         ; and replace TOS with a 0
-        xor TOS, TOS
+        CLR TOS
 resize_end:
         ret
 
@@ -2320,7 +2327,7 @@ warm:
         rep stosb
 
         mov PSP, DATASTACKBOTTOM
-        xor TOS, TOS
+        CLR TOS
 
         ; should reset return stack here
         pop r8
