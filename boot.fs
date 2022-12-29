@@ -29,8 +29,6 @@
 : CONSTANT CREATE , DOES> @ ;
 : VARIABLE CREATE 0 , ;
 
-2 CONSTANT TWO
-
 : DO   ['] (do) COMPILE, HERE ; IMMEDIATE
 : LOOP
   ['] (loop) COMPILE,
