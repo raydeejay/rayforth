@@ -2205,6 +2205,7 @@ global _start
 
 ;; perform various initialization stuff
 warm:
+        ; clear the buffers
         mov rdi, PADDATA
         mov rcx, BUFFERSIZE
         mov al, ' '
@@ -2215,6 +2216,7 @@ warm:
         mov al, ' '
         rep stosb
 
+        ; reset the stacks
         mov rdi, DATASTACK
         mov rcx, CELLSIZE*STACKSIZE
         mov al, 0
@@ -2222,6 +2224,12 @@ warm:
 
         mov PSP, DATASTACKBOTTOM
         xor TOS, TOS
+
+        ; should reset return stack here
+        ; should keep initial value for that
+
+        ; reset STATE to interpret
+        mov qword [val_state], 0
 
         ret
 
