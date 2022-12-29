@@ -119,6 +119,7 @@ align 8
 ;; Parameter stack
         DATASTACK resb CELLSIZE*STACKSIZE
         DATASTACKBOTTOM equ $
+        RETURNSTACKBOTTOM resb 8
 
 ;; Parameter Stack Macros
 %macro DPUSH 1
@@ -1738,6 +1739,8 @@ quit_prompt_end:
         ; if not found, we should abort, don't have it yet xD
         jz postpone_end
 
+        ; if immediate, must compile code to compile a relative call !!!
+
         ; compile relative call
         DPOP W
 
@@ -2210,6 +2213,12 @@ included_done:
 
         ret
 
+;; perform various initialization stuff
+.colon "ABORT", abort
+        call warm
+        jmp quit
+        ret
+
 ; last builtin word, for now, this is important because init uses this
 ; word to set up LATEST
 .colon "CREATE", create
@@ -2297,7 +2306,6 @@ align CELLSIZE
 
 global _start
 
-;; perform various initialization stuff
 warm:
         ; clear the buffers
         mov rdi, PADDATA
@@ -2320,7 +2328,9 @@ warm:
         xor TOS, TOS
 
         ; should reset return stack here
-        ; should keep initial value for that
+        pop r8
+        mov qword rsp, qword [RETURNSTACKBOTTOM]
+        push r8
 
         ; reset STATE to interpret
         mov qword [val_state], 0
@@ -2328,6 +2338,9 @@ warm:
         ret
 
 init:
+        mov r8, rsp
+        sub r8, CELLSIZE
+        mov qword [RETURNSTACKBOTTOM], r8
         call warm
         mov rsi, val_dp
         mov qword [rsi], end_of_builtins
