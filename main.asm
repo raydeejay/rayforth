@@ -504,6 +504,27 @@ DICTIONARY:
         not TOS
         ret
 
+.colon "2*", shift1left
+        shl TOS, 1
+        ret
+
+.colon "2/", shift1right
+        shr TOS, 1
+        ret
+
+.colon "LSHIFT", shiftleft
+        mov rcx, TOS
+        mov TOS, [PSP]
+        add PSP, CELLSIZE
+        shl TOS, cl
+        ret
+
+.colon "RSHIFT", shiftright
+        mov rcx, TOS
+        mov TOS, [PSP]
+        add PSP, CELLSIZE
+        shr TOS, cl
+        ret
 
 ;; User-level applications use as integer registers for passing the
 ;; sequence %rdi, %rsi, %rdx, %rcx, %r8 and %r9. The kernel interface
