@@ -39,7 +39,8 @@
   ['] (0branch) COMPILE, ,
   ['] (enddo) COMPILE,
 ; IMMEDIATE
-: +LOOP  ['] (+loop) COMPILE,
+: +LOOP
+  ['] (+loop) COMPILE,
   ['] (0branch) COMPILE, ,
   ['] (enddo) COMPILE,
 ; IMMEDIATE
@@ -80,6 +81,7 @@
 : UNDER+  ( a b c -- a+c b )  ROT + SWAP ;
 : SPACE   ( -- )  BL EMIT ;
 : SPACES  ( n -- )  DUP 0 > IF  0 DO  BL EMIT  LOOP  EXIT THEN  DROP ;
+: ZEROS   ( n -- )  DUP 0 > IF  0 DO  [CHAR] 0 EMIT  LOOP  EXIT THEN  DROP ;
 
 CREATE <pno> 256 ALLOT
 VARIABLE #<pno>
@@ -95,7 +97,11 @@ VARIABLE #<pno>
 
 
 : U.R  ( rlen u -- )
-  TUCK  BEGIN  DUP  WHILE  -1 UNDER+ BASE @ /  REPEAT  DROP SPACES ..
+  TUCK  BEGIN  -1 UNDER+ BASE @ / DUP  WHILE REPEAT  DROP SPACES ..
+;
+
+: U0.R  ( rlen u -- )
+  TUCK  BEGIN  -1 UNDER+ BASE @ / DUP  WHILE REPEAT  DROP ZEROS ..
 ;
 
 : AT  ( x y -- )  <ESC> <CSI> .. [CHAR] ; EMIT .. [CHAR] H EMIT    ;
