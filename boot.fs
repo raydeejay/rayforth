@@ -193,6 +193,16 @@ CREATE <STRINGBUFFER> 256 ALLOT
   COUNT + DP !
 ; IMMEDIATE
 
+: (abort")  S" ¯\_(ツ)_/¯ <{ " TYPE TYPE S"  }" TYPE ABORT ;
+
+: ABORT"  ( "msg" -- )
+  ['] (S") COMPILE,  [CHAR] " WORD
+  COUNT + DP !
+  \ ['] S" LITERAL ['] COMPILE, COMPILE,
+  ['] (abort") COMPILE,
+; IMMEDIATE
+
+
 \ format is:
 \ TIBDATA len  >IN @  0    4  for stdin
 \ addr len     >IN @  fid  4  for files
