@@ -1873,8 +1873,52 @@ zerobranch_backward:
         ret
 
 .colon "(loop)", innerloop
+        ; inject a false result by default
+        sub PSP, CELLSIZE
+        mov [PSP], TOS
+        xor TOS, TOS
+        mov Y, -1
         ; increase the loop counter by 1
-        inc qword [rsp+CELLSIZE]
+        mov W, [rsp+CELLSIZE]
+        add W, 1
+        ; write back the increment
+        mov qword [rsp+CELLSIZE], W
+        ; check if = limit
+        mov X, [rsp+CELLSIZE*2]
+        cmp W, X
+        ; set result if needed
+        cmove TOS, Y
+        ret
+
+.colon "(+loop)", innerplusloop
+        ; move TOS to r8, inject a false result by default
+        mov r8, TOS
+        sub PSP, CELLSIZE
+        mov [PSP], TOS
+        xor TOS, TOS
+        mov Y, -1
+        ; increase the loop counter by r8 (positive or negative)
+        mov W, [rsp+CELLSIZE]
+        add W, r8
+        ; write back the increment
+        mov qword [rsp+CELLSIZE], W
+        ; check limit, according to sign of r8
+        test r8, r8
+        js innerplusloopdown
+innerplusloopup:
+        mov X, [rsp+CELLSIZE*2]
+        cmp W, X
+        cmovge TOS, Y           ; set result if needed
+        jmp innerplusloopdone
+innerplusloopdown:
+        mov X, [rsp+CELLSIZE*2]
+        cmp W, X
+        cmovle TOS, Y           ; set result if needed
+innerplusloopdone:
+        mov X, [rsp+CELLSIZE*2]
+        cmp W, X
+        ; set result if needed
+        cmove TOS, Y
         ret
 
 .colon "(enddo)", enddo

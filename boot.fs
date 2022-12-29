@@ -32,31 +32,19 @@
 : DO   ['] (do) COMPILE, HERE ; IMMEDIATE
 : LOOP
   ['] (loop) COMPILE,
-  ['] I COMPILE,
-  ['] (limit) COMPILE,
-  ['] = COMPILE,
+  ['] (0branch) COMPILE, ,
+  ['] (enddo) COMPILE,
+; IMMEDIATE
+: +LOOP  ['] (+loop) COMPILE,
   ['] (0branch) COMPILE, ,
   ['] (enddo) COMPILE,
 ; IMMEDIATE
 
-: BEGIN HERE ; IMMEDIATE
-
-: UNTIL
-  ['] 0= COMPILE,
-  ['] (0branch) COMPILE, ,
-; IMMEDIATE
-
-: AGAIN
-  ['] (branch) COMPILE, ,
-; IMMEDIATE
-
-: WHILE    ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
-
-: REPEAT
-  SWAP ['] (branch) COMPILE, ,
-  HERE SWAP !
-; IMMEDIATE
-
+: BEGIN   HERE ; IMMEDIATE
+: UNTIL   ['] 0= COMPILE,  ['] (0branch) COMPILE, , ; IMMEDIATE
+: AGAIN   ['] (branch) COMPILE, , ; IMMEDIATE
+: WHILE   ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
+: REPEAT  SWAP ['] (branch) COMPILE, ,  HERE SWAP ! ; IMMEDIATE
 
 : WORDS
   LATEST @
