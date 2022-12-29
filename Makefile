@@ -8,7 +8,7 @@ LDFLAGS=-m elf_x86_64 -s --omagic
 ASMFLAGSDBG=-f elf64 -g
 LDFLAGSDBG=-m elf_x86_64 -g --omagic
 
-.PHONY: clean
+.PHONY: clean test debug
 
 all: $(BINARY)
 
@@ -24,3 +24,6 @@ debug: main.asm
 
 clean:
 	rm -f *.o ${BINARY} nul
+
+test: ${BINARY}
+	cat test.fs | ./rayforth
