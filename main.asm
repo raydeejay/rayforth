@@ -2253,15 +2253,7 @@ loadbootfs:
 
 ;; --- more code ---
 
-
 ;; function things
-display:
-        DPUSH PADDATA
-        DPUSH BUFFERSIZE
-        call type
-        call cr
-        ret
-
 hello:
         DPUSH helloStr
         DPUSH helloLen
@@ -2278,12 +2270,9 @@ _start:
         call hello
         call loadbootfs
         call quit
-        ;call display
         jmp coda
 
 
 ;;;; THIS IS THE EXIT POINT
 coda:
         call bye
-
-;; %include "testcode.asm"
