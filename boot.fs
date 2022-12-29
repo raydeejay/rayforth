@@ -238,6 +238,12 @@ CREATE <STRINGBUFFER> 256 ALLOT
   R> R> R> R> R> RESTORE-INPUT ( flag ) DROP
 ;
 
+: (dump)  ( addr -- )
+  HEX
+  8 OVER U0.R  SPACE DUP 16 + SWAP DO 2 I C@ U0.R SPACE LOOP
+  DECIMAL CR ;
+: DUMP    ( addr n -- )  OVER + SWAP  DO  I (dump)  16 +LOOP ;
+
 : HELLO
   S" boot.fs loaded" TYPE CR
   UNUSED . S" bytes available" TYPE CR
