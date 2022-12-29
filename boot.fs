@@ -3,6 +3,10 @@
 ( this is a test flag )
 \ 1234567890
 
+: HEX       16 BASE ! ;
+: DECIMAL   10 BASE ! ;
+: BINARY     2 BASE ! ;
+
 : S>D    ( u -- ud )   0 SWAP ;
 
 : >NAME  8 + ;
