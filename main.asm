@@ -441,6 +441,21 @@ DICTIONARY:
         add PSP, CELLSIZE
         ret
 
+.colon "MIN", min
+        mov r8, [PSP]
+        mov r9, TOS
+        cmp r8, r9
+        cmovl TOS, r8
+        add PSP, CELLSIZE
+        ret
+
+.colon "MAX", max
+        mov r8, [PSP]
+        mov r9, TOS
+        cmp r8, r9
+        cmovg TOS, r8
+        add PSP, CELLSIZE
+        ret
 
 .colon "NAND", nand_
         and TOS, [PSP]
