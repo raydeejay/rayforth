@@ -9,7 +9,8 @@
 ;
 
 : (see-string)  ( addr -- addr' )
-  DUP COUNT SPACE TYPE                  \ display string
+  DUP COUNT SPACE
+  [CHAR] " EMIT TYPE [CHAR] " EMIT      \ display string
   COUNT +                               \ next adddress
 ;
 
