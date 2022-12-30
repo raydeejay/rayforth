@@ -1961,7 +1961,6 @@ zerobranch_backward:
 .colon "(+loop)", innerplusloop
         ; move TOS to r8, inject a false result by default
         mov r8, TOS
-        DUP
         CLR TOS
         mov Y, -1
         ; increase the loop counter by r8 (positive or negative)
