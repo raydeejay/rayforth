@@ -78,9 +78,6 @@
 
 : PAGE  <ESC> <CSI> [CHAR] 2 EMIT [CHAR] J EMIT ;
 
-\ a test word
-: FOO  [ 3 4 + ] LITERAL . ;
-
 : UNDER+  ( a b c -- a+c b )  ROT + SWAP ;
 : SPACE   ( -- )  BL EMIT ;
 : SPACES  ( n -- )  DUP 0 > IF  0 DO  BL EMIT  LOOP  EXIT THEN  DROP ;
