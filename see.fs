@@ -1,5 +1,5 @@
-: (see-call)  ( addr -- addr' )
-  XT>NAME COUNT TYPE                    \ display name
+: (see-call)  ( addr xt -- addr' )
+  XT>NAME COUNT TYPE SPACE              \ display name
   4 +                                   \ next adddress
 ;
 
@@ -9,15 +9,14 @@
 ;
 
 : (see-string)  ( addr -- addr' )
-  DUP COUNT SPACE
+  DUP COUNT
   [CHAR] " EMIT TYPE [CHAR] " EMIT      \ display string
   COUNT +                               \ next adddress
 ;
 
-: (see-0branch)  ( addr -- addr' )
-  S" LIT  " TYPE
-  16 OVER @ HEX U0.R DECIMAL            \ display callee address
-  8 +                                   \ next adddress
+: (see-absolute)  ( addr -- addr' )
+  5 - 8 - DUP @ (see-call)              \ display name
+  4 + 5 +                               \ next address
 ;
 
 : (see)  ( addr -- addr' f )
@@ -30,10 +29,13 @@
     \ special case those
     ['] LIT OVER = IF  DROP 4 + S" LIT " TYPE (see-lit) TRUE EXIT  THEN
     ['] (0branch) OVER = IF  (see-call) (see-lit) TRUE EXIT  THEN
+    ['] (branch) OVER = IF  (see-call) (see-lit) TRUE EXIT  THEN
     ['] (s") OVER = IF  (see-call) (see-string) TRUE EXIT  THEN
+    ['] COMPILE, OVER = IF  (see-call) (see-absolute) TRUE EXIT  THEN
     \ otherwise print as a call
     (see-call) TRUE EXIT
   THEN
+  DUP C@ $C3 = IF  S" ;" TYPE FALSE EXIT THEN
   FALSE
 ;
 
