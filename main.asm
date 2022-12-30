@@ -122,28 +122,41 @@ align 8
         RETURNSTACKBOTTOM resb 8
 
 ;; Parameter Stack Macros
-%macro DPUSH 1
+
+%define NOS [PSP]
+
+%define NIP add PSP, CELLSIZE
+
+%macro DROP 0
+        mov TOS, NOS
+        NIP
+%endmacro
+
+%macro DUP 0
         sub PSP, CELLSIZE
-        mov qword [PSP], TOS
+        mov qword NOS, TOS
+%endmacro
+
+%macro DPUSH 1
+        DUP
         mov TOS, qword %1
 %endmacro
 
 %macro DPOP 1
         mov qword %1, TOS
-        mov TOS, [PSP]
-        add PSP, CELLSIZE
+        mov TOS, NOS
+        NIP
 %endmacro
 
 %macro CLR 1
         xor %1, %1
 %endmacro
 
-%macro DUP 0
-        sub PSP, CELLSIZE
-        mov [PSP], TOS
+%macro SWAP 0-1 r8
+        mov %1, TOS
+        mov TOS, NOS
+        mov NOS, %1
 %endmacro
-
-%define NIP add PSP, CELLSIZE
 
 ;; Other memory zones
 PADDATA:
@@ -218,14 +231,14 @@ DICTIONARY:
         ret
 
 .colon "!",store
-        mov r8, [PSP]
+        mov r8, NOS
         mov [TOS], r8
         mov TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
         ret
 
 .colon "+!",plusstore
-        mov r8, [PSP]
+        mov r8, NOS
         add [TOS], r8
         mov TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
@@ -236,14 +249,14 @@ DICTIONARY:
         ret
 
 .colon "C!", cstore
-        movzx r8, byte [PSP]
+        movzx r8, byte NOS
         mov byte [TOS], r8b
         mov TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
         ret
 
 .colon "C+!", cplusstore
-        movzx r8, byte [PSP]
+        movzx r8, byte NOS
         add byte [TOS], r8b
         mov TOS, [PSP+CELLSIZE]
         add PSP, CELLSIZE*2
@@ -257,8 +270,7 @@ DICTIONARY:
         ret
 
 .colon "RP@", rpFetch
-        sub PSP, CELLSIZE
-        mov [PSP], TOS
+        DUP
         mov TOS, rsp
         add TOS, CELLSIZE  ; return value under this function's return
 
@@ -303,7 +315,7 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmove TOS, W
         NIP
         ret
@@ -312,7 +324,7 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmovne TOS, W
         NIP
         ret
@@ -321,7 +333,7 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmovl TOS, W
         NIP
         ret
@@ -330,7 +342,7 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmovg TOS, W
         NIP
         ret
@@ -339,7 +351,7 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmovle TOS, W
         NIP
         ret
@@ -348,7 +360,7 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmovge TOS, W
         NIP
         ret
@@ -357,7 +369,7 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmovb TOS, W
         NIP
         ret
@@ -366,7 +378,7 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmova TOS, W
         NIP
         ret
@@ -375,7 +387,7 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmovbe TOS, W
         NIP
         ret
@@ -384,19 +396,19 @@ DICTIONARY:
         mov r8, TOS
         CLR TOS
         mov W, -1
-        cmp [PSP], r8
+        cmp NOS, r8
         cmovae TOS, W
         NIP
         ret
 
 .colon "+", plus
-        add TOS, [PSP]
+        add TOS, NOS
         NIP
         ret
 
 .colon "-", minus
-        sub [PSP], TOS
-        mov TOS, [PSP]
+        sub NOS, TOS
+        mov TOS, NOS
         NIP
         ret
 
@@ -409,7 +421,7 @@ DICTIONARY:
         ret
 
 .colon "*", multiply            ; bit broken but works for reasonable numbers... xD
-        imul TOS, [PSP]
+        imul TOS, NOS
         NIP
         ret
 
@@ -417,9 +429,9 @@ DICTIONARY:
 ;; RAX ← Quotient, RDX ← Remainder.
 .colon "/MOD", dividemod
         xor rdx, rdx
-        mov rax, [PSP]
+        mov rax, NOS
         idiv TOS
-        mov [PSP], rax
+        mov NOS, rax
         mov TOS, rdx
         ret
 
@@ -428,15 +440,15 @@ DICTIONARY:
 ;; ( ud u1 -- u2 u3 )
 .colon "UM/MOD", umdividemod
         mov rdx, [PSP+CELLSIZE] ; which will be 0, but whatever...
-        mov rax, [PSP]
+        mov rax, NOS
         div TOS
-        mov [PSP], rax
+        mov NOS, rax
         mov TOS, rdx
         ret
 
 .colon "/", divide
         xor rdx, rdx
-        mov rax, [PSP]
+        mov rax, NOS
         idiv TOS
         mov TOS, rax
         NIP
@@ -444,26 +456,26 @@ DICTIONARY:
 
 .colon "MOD", mod
         xor rdx, rdx
-        mov rax, [PSP]
+        mov rax, NOS
         idiv TOS
         mov TOS, rdx
         NIP
         ret
 
 .colon "MIN", min
-        mov r8, [PSP]
+        mov r8, NOS
         mov r9, TOS
         cmp r8, r9
         cmovl TOS, r8
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "MAX", max
-        mov r8, [PSP]
+        mov r8, NOS
         mov r9, TOS
         cmp r8, r9
         cmovg TOS, r8
-        add PSP, CELLSIZE
+        NIP
         ret
 
 .colon "ABS", _abs
@@ -477,35 +489,35 @@ DICTIONARY:
         ret
 
 .colon "NAND", nand_
-        and TOS, [PSP]
+        and TOS, NOS
         not TOS
         NIP
         ret
 
 .colon "NOR", nor_
-        or TOS, [PSP]
+        or TOS, NOS
         not TOS
         NIP
         ret
 
 .colon "XNOR", xnor_
-        xor TOS, [PSP]
+        xor TOS, NOS
         not TOS
         NIP
         ret
 
 .colon "AND", and_
-        and TOS, [PSP]
+        and TOS, NOS
         NIP
         ret
 
 .colon "OR", or_
-        or TOS, [PSP]
+        or TOS, NOS
         NIP
         ret
 
 .colon "XOR", xor_
-        xor TOS, [PSP]
+        xor TOS, NOS
         NIP
         ret
 
@@ -523,14 +535,14 @@ DICTIONARY:
 
 .colon "LSHIFT", shiftleft
         mov rcx, TOS
-        mov TOS, [PSP]
+        mov TOS, NOS
         add PSP, CELLSIZE
         shl TOS, cl
         ret
 
 .colon "RSHIFT", shiftright
         mov rcx, TOS
-        mov TOS, [PSP]
+        mov TOS, NOS
         add PSP, CELLSIZE
         shr TOS, cl
         ret
@@ -652,22 +664,20 @@ DICTIONARY:
         ret
 
 .colon "2DUP", _2dup               ; ( a b -- a b a b )
-        mov r8, [PSP]
+        mov r8, NOS
         sub PSP, CELLSIZE*2
         mov [PSP+CELLSIZE], TOS
-        mov [PSP], r8
+        mov NOS, r8
         ret
 
 .colon "SWAP", swap             ; ( a b -- b a )
-        mov r8, TOS
-        mov TOS, [PSP]
-        mov [PSP], r8
+        SWAP
         ret
 
 .colon "2SWAP", _2swap             ; ( a b c d -- c d a b )
         mov r8, [PSP+CELLSIZE*2]
-        mov r9, [PSP]
-        mov [PSP], r8
+        mov r9, NOS
+        mov NOS, r8
         mov [PSP+CELLSIZE*2], r9
         mov r11, TOS
         mov r12, [PSP+CELLSIZE]
@@ -676,8 +686,7 @@ DICTIONARY:
         ret
 
 .colon "DROP", drop             ; ( a -- )
-        mov TOS, [PSP]
-        NIP
+        DROP
         ret
 
 .colon "2DROP", _2drop             ; ( a b -- )
@@ -686,7 +695,7 @@ DICTIONARY:
         ret
 
 .colon "OVER", over             ; ( a b -- a b a )
-        mov r8, [PSP]
+        mov r8, NOS
         DPUSH r8
         ret
 
@@ -694,7 +703,7 @@ DICTIONARY:
         sub PSP, CELLSIZE*2
         mov [PSP+CELLSIZE], TOS
         mov r8, [PSP+CELLSIZE*4]
-        mov [PSP], r8
+        mov NOS, r8
         mov TOS, [PSP+CELLSIZE*3]
         ret
 
@@ -703,25 +712,25 @@ DICTIONARY:
         ret
 
 .colon "TUCK", tuck             ; ( a b -- b a b )
-        mov r8, [PSP]
+        mov r8, NOS
         sub PSP, CELLSIZE
-        mov [PSP], r8
+        mov NOS, r8
         mov [PSP+CELLSIZE], TOS
         ret
 
 .colon "ROT", rot               ; ( a b c -- b c a )
-        mov r8, [PSP]
+        mov r8, NOS
         mov r9, [PSP+CELLSIZE]
-        mov [PSP], TOS
+        mov NOS, TOS
         mov [PSP+CELLSIZE], r8
         mov TOS, r9
         ret
 
 .colon "-ROT", minusrot         ; ( a b c -- c a b )
-        mov r8, [PSP]
+        mov r8, NOS
         mov r9, [PSP+CELLSIZE]
         mov [PSP+CELLSIZE], TOS
-        mov [PSP], r9
+        mov NOS, r9
         mov TOS, r8
         ret
 
@@ -1069,7 +1078,7 @@ found_closing_delimiter:
 
 .colon "FIND", find             ; ( c-addr -- c-addr 0 | xt 1 | xt -1 )
         ; store the address of the source string on r10
-        ; mov r10, [PSP]
+        ; mov r10, NOS
         DPOP r10
         DPUSH r10
         ; store the address of the link on Y
@@ -1148,7 +1157,7 @@ find_not_found:
 
 find_word_found:
         ; drop c-addr
-        call drop
+        DROP
         ; push xt (code address)
         DPUSH rdi
         ; push either 1 (imm) or -1 (non-imm)
@@ -1167,14 +1176,14 @@ find_return_non_immediate:
         call bl_
         call word_
         call find
-        call drop               ; nope, bad
+        DROP                    ; nope, bad
         ret
 
 .colon "[']", tickimm, IMM                ; ( c"" -- xt )
         call bl_
         call word_
         call find
-        call drop               ; nope, bad
+        DROP                    ; nope, bad
         DPUSH lit
         call compilecomma
         call comma
@@ -1212,7 +1221,7 @@ find_return_non_immediate:
         call fetch
         call swap
 
-        xor r10, r10            ; clear the 64-bit register to load 8 bits
+        CLR r10             ; clear the 64-bit register to load 8 bits
 
         ; check for sign and prefixes first!!!!
         mov r10b, [W]
@@ -1382,7 +1391,7 @@ interpret_compiling:
         ; obtain a 32 bit number to work with 32 bit signed
         call dp
         call fetch
-        ;mov r13d, [PSP]
+        ;mov r13d, NOS
         ;call drop
         DPOP X
 
@@ -1447,7 +1456,7 @@ interpret_maybe_number:
         ; obtain a 32 bit number to work with 32 bit signed
         call dp
         call fetch
-        ;mov r13d, [PSP]
+        ;mov r13d, NOS
         ;call drop
         DPOP X
 
@@ -1512,10 +1521,10 @@ interpret_end:
         neg rax
 
 period_begin_process:
-        xor W, W
+        CLR W
 
 period_process_digit:
-        xor rdx, rdx
+        CLR rdx
         mov rbx, [val_base]
         div rbx
         add rdx, DIGITS            ; make a letter
@@ -1565,10 +1574,10 @@ period_done:
         neg rax
 
 period_begin_process2:
-        xor W, W
+        CLR W
 
 period_process_digit2:
-        xor rdx, rdx
+        CLR rdx
         mov rbx, [val_base]
         div rbx
         add rdx, DIGITS            ; make a letter
@@ -1758,7 +1767,7 @@ quit_prompt_end:
 
         ; obtain a 32 bit number to work with 32 bit signed
         call here
-        ;mov r13d, [PSP]
+        ;mov r13d, NOS
         ;call drop
         DPOP X
 
@@ -1785,7 +1794,7 @@ postpone_end:
 
         ; obtain a 32 bit number to work with 32 bit signed
         DPUSH rdi
-        ;mov r13d, [PSP]
+        ;mov r13d, NOS
         ;call drop
         DPOP X
 
@@ -2038,10 +2047,10 @@ innerplusloopdone:
 
         ; otherwise store the length at the address, then increment
         ; address by CELLSIZE
-        mov r8, [PSP]
+        mov r8, NOS
         mov [r8], W
         add r8, CELLSIZE
-        mov [PSP], r8
+        mov NOS, r8
         ; and replace TOS with a 0
         CLR TOS
 allocate_end:
@@ -2079,10 +2088,10 @@ allocate_end:
 
         ; otherwise store the length at the address, then increment
         ; address by CELLSIZE
-        mov r8, [PSP]
+        mov r8, NOS
         mov [r8], W
         add r8, CELLSIZE
-        mov [PSP], r8
+        mov NOS, r8
         ; and replace TOS with a 0
         CLR TOS
 resize_end:
@@ -2278,7 +2287,7 @@ included_done:
         ; obtain a 32 bit number to work with 32 bit signed
         call dp
         call fetch
-        ;mov r13d, [PSP]
+        ;mov r13d, NOS
         ;call drop
         DPOP X
 
