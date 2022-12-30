@@ -1,17 +1,22 @@
 : (see-call)  ( addr -- addr' )
-    XT>NAME COUNT TYPE                  \ display name
-    4 +                                 \ next adddress
+  XT>NAME COUNT TYPE                    \ display name
+  4 +                                   \ next adddress
 ;
 
 : (see-lit)  ( addr -- addr' )
-    16 OVER @ HEX U0.R DECIMAL          \ display callee address
-    8 +                                 \ next adddress
+  16 OVER @ HEX U0.R DECIMAL            \ display callee address
+  8 +                                   \ next adddress
+;
+
+: (see-string)  ( addr -- addr' )
+  DUP COUNT SPACE TYPE                  \ display string
+  COUNT +                               \ next adddress
 ;
 
 : (see-0branch)  ( addr -- addr' )
-    S" LIT  " TYPE
-    16 OVER @ HEX U0.R DECIMAL          \ display callee address
-    8 +                                 \ next adddress
+  S" LIT  " TYPE
+  16 OVER @ HEX U0.R DECIMAL            \ display callee address
+  8 +                                   \ next adddress
 ;
 
 : (see)  ( addr -- addr' f )
@@ -22,8 +27,9 @@
     OVER 4 + +                 \ calculate xt
     \ check xt against LIT and friends
     \ special case those
-    ['] LIT OVER = IF  DROP 4 + S" LIT " TYPE (see-lit) TRUE EXIT  THEN 
-    ['] (0branch) OVER = IF  (see-call) (see-lit) TRUE EXIT  THEN 
+    ['] LIT OVER = IF  DROP 4 + S" LIT " TYPE (see-lit) TRUE EXIT  THEN
+    ['] (0branch) OVER = IF  (see-call) (see-lit) TRUE EXIT  THEN
+    ['] (s") OVER = IF  (see-call) (see-string) TRUE EXIT  THEN
     \ otherwise print as a call
     (see-call) TRUE EXIT
   THEN
