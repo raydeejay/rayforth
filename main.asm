@@ -1967,9 +1967,6 @@ innerplusloopdown:
         cmovle TOS, Y           ; set result if needed
 innerplusloopdone:
         mov X, [rsp+CELLSIZE*2]
-        cmp W, X
-        ; set result if needed
-        cmove TOS, Y
         ret
 
 .colon "(enddo)", enddo
