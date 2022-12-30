@@ -254,6 +254,26 @@ CREATE <STRINGBUFFER> 256 ALLOT
   DECIMAL CR ;
 : DUMP    ( addr n -- )  OVER + SWAP  DO  I (dump)  16 +LOOP ;
 
+: (fetch32) ( addr -- u32 )
+  0 SWAP
+  32 0 DO
+    COUNT I LSHIFT UNDER+
+  8 +LOOP
+  DROP
+  DUP $80000000 AND IF  $FFFFFFFF00000000 OR  THEN \ sign extend
+;
+
+
+: XT>NAME  ( addr -- addr' )
+  DUP >R BEGIN                          \ addr' | addr0
+    DUP C@ $7F AND 1+                   \ addr' len?+1 | addr0
+    OVER + R@ <>                        \ addr' notfound? | addr0
+  WHILE
+      1-                                \ addr'-1 | addr0
+  REPEAT
+  R> DROP                               \ addr'
+;
+
 : HELLO
   S" boot.fs loaded" TYPE CR
   UNUSED . S" bytes available" TYPE CR
