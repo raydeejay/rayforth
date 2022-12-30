@@ -274,6 +274,7 @@ CREATE <STRINGBUFFER> 256 ALLOT
   R> DROP                               \ addr'
 ;
 
+s" see.fs" INCLUDED
 : HELLO
   S" boot.fs loaded" TYPE CR
   UNUSED . S" bytes available" TYPE CR
