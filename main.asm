@@ -119,6 +119,12 @@ align 8
 ;; Parameter stack
         DATASTACK resb CELLSIZE*STACKSIZE
         DATASTACKBOTTOM equ $
+
+;; Temporary stack
+        TEMPSTACK resb CELLSIZE*STACKSIZE
+        TEMPSTACKBOTTOM equ $
+
+;; Return Stack
         RETURNSTACKBOTTOM resb 8
 
 ;; Parameter Stack Macros
@@ -300,6 +306,24 @@ DICTIONARY:
         push r9
         ret
 
+.variable "TSTACKTOP", tempstacktop, TEMPSTACKBOTTOM
+
+.colon "T@", tfetch
+        mov r8, [val_tempstacktop]
+        DPUSH [r8]
+        ret
+
+.colon "T>", fromtstack
+        mov r8, [val_tempstacktop]
+        DPUSH [r8]
+        add qword [val_tempstacktop], CELLSIZE
+        ret
+
+.colon ">T", totstack
+        sub qword [val_tempstacktop], CELLSIZE
+        mov r8, [val_tempstacktop]
+        DPOP [r8]
+        ret
 
 .colon "0=", zeroEqual
         mov r8, TOS
