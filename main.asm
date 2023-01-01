@@ -286,14 +286,14 @@ DICTIONARY:
         ret
 
 ;; these words become shorter if code is inlined
-.colon "R>", torstack
+.colon "R>", fromrstack
         pop r8
         pop r9
         push r8
         DPUSH r9
         ret
 
-.colon ">R", fromrstack
+.colon ">R", torstack
         DPOP r8
         pop r9
         push r8
