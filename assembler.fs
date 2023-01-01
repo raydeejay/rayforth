@@ -144,11 +144,65 @@ VARIABLE <opcode2>
   abort" wat"
 ; immediate
 
+: mov,  ( type src type dst -- )
+  \ figure out rex.w prefix
+  rex.w                               \ always 64-bit operands
+  $89 <opcode1> C!                    \ $89 unless the src is indirect
+  \ rearrange parameters             ( srcspec src dstspec dst )
+  2swap swap -rot swap 2swap swap    ( src dst srcspec dstspec )
+  \ validate operands
+  dup 0= if  abort" destination cannot be immediate"  then
+  over 0= if  abort" source cannot be immediate yet"  then
+  dup 1 = if                        \ dst is direct
+    drop                            \ drop dstspec ( src dst srcspec )
+    dup 2 = if                      \ src is memory
+      drop ( swap )
+      $8B <opcode1> c!               \ src is indirect, swap src/dst
+      4 >ModR/M.rm  >ModR/M.reg
+      assemble/1
+      $25 c,                         \ SIB byte pointing to next addr
+      $FFFFFFFF and                  \ trim to 32 bits because science
+      address32,                     \ write address32
+      exit
+    then
+    dup 1 = if  %11 ModR/M.mod!  then  \ src is direct
+    dup 3 = if
+      -rot swap rot $8B <opcode1> c!   \ src is indirect, swap src/dst
+    then
+    drop
+    >ModR/M.rm  >ModR/M.reg  assemble/1
+    exit
+  then
+  dup 2 = if                        \ dst is address
+    drop                            \ drop dstspec ( src dst srcspec )
+    dup 2 = if  abort" two operands are memory"  then
+    dup 3 = if  abort" can't encode indirect source and memory"  then
+    dup 1 = if
+      drop
+      swap                             \ src is indirect, swap src/dst
+      4 >ModR/M.rm  >ModR/M.reg  assemble/1
+      $25 c,                         \ SIB byte pointing to next addr
+      $FFFFFFFF and                  \ trim to 32 bits because science
+      address32,                     \ write address32
+      exit
+    then
+  then
+  dup 3 = if                            \ dst is indirect
+    drop                                \ drop dstspec
+    dup 2 = if  abort" can't encode indirect destination and memory"  then
+    dup 3 = if  abort" two indirect operands"  then
+    drop
+    >ModR/M.rm  >ModR/M.reg  assemble/1
+    exit
+  then
+  abort" wat"
+; immediate
+
 variable timmy
 
 : one+  ( n -- n+1 )  [ r15 ] inc, ;
 : dupe  ( n -- n+n )  [ r15 r15 ] add, ;
-\ : sub   ( n -- n )   [ r15 r14 ] add, [ r14 ] inc, [ r14 r15 ] sub, ;
+: makeone   ( n -- n+1-n )   [ r15 r8 ] mov, [ r15 ] inc, [ r8 r15 ] sub, ;
 
 : oneup ( -- ) [ timmy mem ] inc, ;
 : addrup    [ [r15] ] inc, ;
