@@ -275,6 +275,11 @@ DICTIONARY:
         add TOS, CELLSIZE  ; return value under this function's return
         ret
 
+.colon "RP0@", rpBaseFetch
+        DUP
+        mov TOS, [RETURNSTACKBOTTOM]
+        ret
+
 .colon "R@", rfetch
         DUP
         mov TOS, [rsp+CELLSIZE]
