@@ -17,7 +17,7 @@ VARIABLE <opcode2>
 : [r12]  3 12 ; : [r13]  3 13 ; : [r14]  3 14 ; : [r15]  3 15 ;
 
 \ type 2 for memory
-: mem   ( u -- 2 u )  swap ;
+: mem   ( u -- 2 u )  2 swap ;
 
 : rex.w <REX> c@ %01001000 or <REX> c! ;
 : rex.r <REX> c@ %01000100 or <REX> c! ;
