@@ -43,6 +43,9 @@ VARIABLE <opcode2>
   dup c,  8 rshift dup c,  8 rshift dup c,  8 rshift c,
 ;
 
+: >ModR/M.rm  ( u -- )  dup 7 > if  rex.b  then  ModR/M.rm! ;
+: >ModR/M.reg ( u -- )  dup 7 > if  rex.r  then  ModR/M.reg! ;
+
 \ INSTRUCTIONS -------------------------------------
 : ret, $C3 c, ; immediate
 
@@ -56,16 +59,15 @@ VARIABLE <opcode2>
   \ register operand
   dup 1 = over 3 = or if
     \ figure out ModR/M
-    dup 1 = if  %11 ModR/M.mod! then    \ 11 direct
-    dup 3 = if  %00 ModR/M.mod! then    \ 00 indirect
-    dup 7 > if  rex.b  then             \ set prefix bits if needed
-    ModR/M.rm!                          \ set B bits, one operand (??)
+    1 = if  %11 ModR/M.mod! then    \ 11 direct
+    >ModR/M.rm
     \ assemble instruction
     $FF <opcode1> c! assemble/1         \ always opcode FF 01, 64-bit
-    drop exit                           \ drop spec and finish
+    exit                           \ drop spec and finish
   then
   \ memory operand
   dup 2 = if
+    drop
     \ figure out ModR/M (ModR/M $25 means index=RSP,base=RBP, so 0
     %00 ModR/M.mod!                     \ indirect
     %100 ModR/M.reg!                    \ RSP INDEX
@@ -83,14 +85,15 @@ VARIABLE <opcode2>
     $FF <opcode1> C! $04 <opcode2> C! assemble/2
     $FFFFFFFF and                    \ trim to 32 bits because science
     address32,                       \ write address32
-    drop exit                       \ drop spec and finish
+    exit                             \ finish
   then
   abort" invalid parameters"
 ; immediate
 
 : add,  ( type src type dst -- )
   \ figure out rex.w prefix
-  rex.w                                 \ always 64-bit operands
+  rex.w                               \ always 64-bit operands
+  $01 <opcode1> C!                    \ $01 unless the src is indirect
   \ rearrange parameters             ( srcspec src dstspec dst )
   2swap swap -rot swap 2swap swap    ( src dst srcspec dstspec )
   \ validate operands
@@ -100,21 +103,15 @@ VARIABLE <opcode2>
   over 2 = if  abort" cannot encode src address yet"  then
   dup 1 = if                      \ dst is direct
     drop                          \ drop dstspec ( src dst srcspec )
-    $01 <opcode1> C!              \ always opcode 01 r/m64, r64
     dup 1 = if  %11 ModR/M.mod!  then  \ src is direct
     3 = if  swap $03 <opcode1> c!  then \ src is indirect, swap src/dst
-    dup 7 >  if  rex.b  then ModR/M.rm!   \ set prefix bit if needed
-    dup 7 >  if  rex.r  then ModR/M.reg!  \ set prefix bit if needed
-    assemble/1
+    >ModR/M.rm  >ModR/M.reg  assemble/1
     exit
   then
   dup 3 = if                            \ dst is indirect
     drop                                \ drop dstspec
-    $01 <opcode1> C!                    \ always opcode 03 r/m64, r64
     3 = if  abort" two indirect operands"  then
-    dup 7 >  if  rex.b  then ModR/M.rm!   \ set prefix bit if needed
-    dup 7 >  if  rex.r  then ModR/M.reg!  \ set prefix bit if needed
-    assemble/1
+    >ModR/M.rm  >ModR/M.reg  assemble/1
     exit
   then
   abort" wat"
@@ -122,7 +119,8 @@ VARIABLE <opcode2>
 
 : sub,  ( type src type dst -- )
   \ figure out rex.w prefix
-  rex.w                                 \ always 64-bit operands
+  rex.w                               \ always 64-bit operands
+  $29 <opcode1> C!                    \ $01 unless the src is indirect
   \ rearrange parameters             ( srcspec src dstspec dst )
   2swap swap -rot swap 2swap swap    ( src dst srcspec dstspec )
   \ validate operands
@@ -132,21 +130,15 @@ VARIABLE <opcode2>
   over 2 = if  abort" cannot encode src address yet"  then
   dup 1 = if                      \ dst is direct
     drop                          \ drop dstspec ( src dst srcspec )
-    $29 <opcode1> C!              \ always opcode 01 r/m64, r64
     dup 1 = if  %11 ModR/M.mod!  then  \ src is direct
     3 = if  swap $2B <opcode1> c!  then \ src is indirect, swap src/dst
-    dup 7 >  if  rex.b  then ModR/M.rm!   \ set prefix bit if needed
-    dup 7 >  if  rex.r  then ModR/M.reg!  \ set prefix bit if needed
-    assemble/1
+    >ModR/M.rm  >ModR/M.reg  assemble/1
     exit
   then
   dup 3 = if                            \ dst is indirect
     drop                                \ drop dstspec
-    $29 <opcode1> C!                    \ always opcode 03 r/m64, r64
     3 = if  abort" two indirect operands"  then
-    dup 7 >  if  rex.b  then ModR/M.rm!   \ set prefix bit if needed
-    dup 7 >  if  rex.r  then ModR/M.reg!  \ set prefix bit if needed
-    assemble/1
+    >ModR/M.rm  >ModR/M.reg  assemble/1
     exit
   then
   abort" wat"
