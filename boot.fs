@@ -275,6 +275,22 @@ CREATE <STRINGBUFFER> 256 ALLOT
 ;
 
 s" see.fs" INCLUDED
+
+: args   ( -- args-addr )  rp0@ 3 cells + ;
+: nargs  ( -- n )  rp0@ 2 cells + @ ;
+: ctype  ( cstr -- )  begin count dup while emit repeat 2drop ;
+: ?args  ( -- )
+  nargs dup .
+  args swap 0 do
+    dup @ ctype space cell+
+  loop drop
+;
+
+: forget ( "name" -- )
+  bl word find 0= if abort" word not found" then
+  xt>name 1 cells -  dup dp !  @ latest !
+;
+
 : HELLO
   S" boot.fs loaded" TYPE CR
   UNUSED . S" bytes available" TYPE CR
