@@ -273,6 +273,7 @@ DICTIONARY:
         DUP
         mov TOS, rsp
         add TOS, CELLSIZE  ; return value under this function's return
+        ret
 
 .colon "R@", rfetch
         DUP
