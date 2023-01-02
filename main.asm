@@ -227,11 +227,6 @@ DICTIONARY:
 .constant "TRUE", true, -1
 .constant "FALSE", false, 0
 
-.colon "EXIT", exit
-        pop r8
-        ret
-
-
 .colon "@", fetch
         mov TOS, [TOS]
         ret

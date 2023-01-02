@@ -3,6 +3,8 @@
 ( this is a test flag )
 \ 1234567890
 
+: EXIT $C2 C, 0 C, 0 C, ; IMMEDIATE
+
 : HEX       16 BASE ! ;
 : DECIMAL   10 BASE ! ;
 : BINARY     2 BASE ! ;
