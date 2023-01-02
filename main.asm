@@ -270,9 +270,8 @@ DICTIONARY:
 
 ;; mostly for internal use
 .colon "PSP", pointerOfNOS
-        mov r8, PSP
         DUP
-        mov TOS, r8
+        mov TOS, PSP
         ret
 
 .colon "RP@", rpFetch
