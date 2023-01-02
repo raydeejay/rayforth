@@ -188,6 +188,7 @@ WORDBUFFER:
 
 %define link 0
 %define IMM 0x80
+%define SMUDGE 0x40
 
 %macro head 3
 %{2}_entry:
@@ -1225,6 +1226,9 @@ find_return_non_immediate:
         mov rdi, val_dp
         mov [rdi], rsi
 
+        ; reveal the word
+        call reveal
+
         DPUSH 0
         call state
         call store
@@ -1843,6 +1847,18 @@ postpone_end:
         call store
         ret
 
+.colon "HIDE", hide, IMM
+        mov r8, [val_latest]
+        add r8, CELLSIZE
+        or byte [r8], SMUDGE
+        ret
+
+.colon "REVEAL", reveal, IMM
+        mov r8, [val_latest]
+        add r8, CELLSIZE
+        and byte [r8], $BF      ; clear SMUDGE bit
+        ret
+
 .colon ":", colon
         ; make an entry at HERE
         ; first store the address on LATEST at HERE
@@ -1889,6 +1905,9 @@ postpone_end:
         call plus               ; add HERE to the size we kept on the stack + 1
         call dp
         call store
+
+        ; hide the word
+        call hide
 
         ; finally switch to compile mode
         DPUSH 1
