@@ -140,6 +140,11 @@ CHAR 8 ATTR: <INVISIBLE>
   ROT SWAP 1 SYSCALL/3 DUP (ior)
 ;
 
+: WRITE-LINE  ( c-addr u1 fid -- u2 ior )
+  ROT SWAP 1 SYSCALL/3 DUP (ior)
+  BL  1 SYSCALL/3 DUP (ior)
+;
+
 \ fix to make fully compliant...?
 
 : FORTH-READ-LINE  ( c-addr u1 fileid -- u2 flag ior )
