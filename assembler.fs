@@ -198,6 +198,87 @@ VARIABLE <opcode2>
   abort" wat"
 ; immediate
 
+\ - populate assembler variables based on operands and operand specs
+\ - return a flag indicating whether to compile a SIB byte and disp32
+\ - return a flag indicating whether to switch to alternative opcode
+\ this is not a perfect system but for now we're only using 2 opcodes
+\ per instruction
+
+\ dd $89
+\ di $8B
+\ dm $8B
+\ md $89
+\ mi not available
+\ mm not available
+\ id $89
+\ ii not available
+\ im not available
+
+
+: encodeoperands  ( type src type dst -- disp-f altopcode-f )
+  \ figure out rex.w prefix
+  rex.w                               \ always 64-bit operands
+  \ rearrange parameters             ( srcspec src dstspec dst )
+  2swap swap -rot swap 2swap swap    ( src dst srcspec dstspec )
+  \ validate operands
+  dup 0= if  abort" destination cannot be immediate"  then
+  over 0= if  abort" source cannot be immediate yet"  then
+  dup 1 = if                        \ dst is direct
+    drop                            \ drop dstspec ( src dst srcspec )
+    dup 1 = if
+      drop
+      %11 ModR/M.mod!  >ModR/M.rm  >ModR/M.reg
+      FALSE FALSE exit
+    then  \ src is direct
+    dup 2 = if                      \ src is memory
+      drop
+      4 >ModR/M.rm  >ModR/M.reg
+      TRUE TRUE exit
+    then
+    dup 3 = if
+      drop swap  >ModR/M.rm  >ModR/M.reg
+      FALSE TRUE exit
+    then
+    abort" direct dst, invalid src type"
+  then
+  dup 2 = if                        \ dst is address
+    drop                            \ drop dstspec ( src dst srcspec )
+    dup 2 = if  abort" two operands are memory"  then
+    dup 3 = if  abort" can't encode indirect source and memory"  then
+    dup 1 = if
+      drop
+      swap                             \ src is indirect, swap src/dst
+      4 >ModR/M.rm  >ModR/M.reg
+      TRUE FALSE exit
+    then
+    abort" memory dst, invalid src type"
+  then
+  dup 3 = if                            \ dst is indirect
+    drop                                \ drop dstspec
+    dup 2 = if  abort" can't encode indirect destination and memory"  then
+    dup 3 = if  abort" two indirect operands"  then
+    dup 1 = if
+      drop
+      >ModR/M.rm  >ModR/M.reg
+      FALSE FALSE exit
+    then
+    abort" indirect dst, invalid src type"
+  then
+  abort" wat"
+;
+
+: newmov, ( spec src spec dst -- )
+  $89 <opcode1> !
+  encodeoperands if  $8B <opcode1> !  then
+  assemble/1
+  if
+    $25 c,                         \ SIB byte pointing to next addr
+    $FFFFFFFF and                  \ trim to 32 bits because science
+    address32,                     \ write address32
+  then
+; immediate
+
+
 variable timmy
 
 : one+  ( n -- n+1 )  [ r15 ] inc, ;
