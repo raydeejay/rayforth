@@ -78,7 +78,8 @@
 : <ESC>  27 EMIT ;
 : <CSI>  [CHAR] [ EMIT ;
 
-: PAGE  <ESC> <CSI> [CHAR] 2 EMIT [CHAR] J EMIT ;
+: PAGE   <ESC> <CSI> [CHAR] H EMIT
+         <ESC> <CSI> [CHAR] 2 EMIT [CHAR] J EMIT ;
 
 : UNDER+  ( a b c -- a+c b )  ROT + SWAP ;
 : SPACE   ( -- )  BL EMIT ;
