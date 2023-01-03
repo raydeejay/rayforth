@@ -1856,7 +1856,7 @@ postpone_end:
 .colon "REVEAL", reveal, IMM
         mov r8, [val_latest]
         add r8, CELLSIZE
-        and byte [r8], $BF      ; clear SMUDGE bit
+        and byte [r8], 0xBF      ; clear SMUDGE bit
         ret
 
 .colon ":", colon
