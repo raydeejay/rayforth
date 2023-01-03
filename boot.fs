@@ -51,7 +51,7 @@
 ; IMMEDIATE
 
 : BEGIN   HERE ; IMMEDIATE
-: UNTIL   ['] 0= COMPILE,  ['] (0branch) COMPILE, , ; IMMEDIATE
+: UNTIL   ( ['] 0= COMPILE, ) ['] (0branch) COMPILE, , ; IMMEDIATE
 : AGAIN   ['] (branch) COMPILE, , ; IMMEDIATE
 : WHILE   ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
 : REPEAT  SWAP ['] (branch) COMPILE, ,  HERE SWAP ! ; IMMEDIATE
@@ -61,7 +61,7 @@
   BEGIN
     DUP >NAME
     COUNT  $7F AND  TYPE BL EMIT
-    @ DUP 0<>
+    @ DUP 0=
   UNTIL
   DROP
 ;
