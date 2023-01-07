@@ -2297,19 +2297,6 @@ included_done:
         call bl_                ; get the word name
         call word_              ; which will be on WORDBUFFER as a c-string
 
-        ; then flags+count followed by the name
-        ;; call dup
-        ;; call cfetch
-        ;; DPUSH 1
-        ;; call plus
-        ;; DPOP rcx                ; we will copy count+1 bytes
-        ;; DPOP rsi
-        ;; DPUSH rcx               ; let's keep the size on the stack
-        ;; call dp
-        ;; call fetch
-        ;; DPOP rdi
-        ;; rep movsb
-
         ; update here (we left the address on the stack)
         call dup
         call cfetch
