@@ -55,7 +55,7 @@ VARIABLE <opcode2>
   \ rearrange parameters
   swap
   \ validate operand
-  dup 0= if  abort" operand cannot be immediate"  then
+  dup 0= abort" operand cannot be immediate"
   \ register operand
   dup 1 = over 3 = or if
     \ figure out ModR/M
@@ -87,7 +87,7 @@ VARIABLE <opcode2>
     address32,                       \ write address32
     exit                             \ finish
   then
-  abort" invalid parameters"
+  true abort" invalid parameters"
 ; immediate
 
 : add,  ( type src type dst -- )
@@ -97,10 +97,10 @@ VARIABLE <opcode2>
   \ rearrange parameters             ( srcspec src dstspec dst )
   2swap swap -rot swap 2swap swap    ( src dst srcspec dstspec )
   \ validate operands
-  dup 0= if  abort" destination cannot be immediate"  then
-  dup 2 = if  abort" cannot encode dst address yet"  then
-  over 0= if  abort" source cannot be immediate yet"  then
-  over 2 = if  abort" cannot encode src address yet"  then
+  dup 0= abort" destination cannot be immediate"
+  dup 2 = abort" cannot encode dst address yet"
+  over 0= abort" source cannot be immediate yet"
+  over 2 = abort" cannot encode src address yet"
   dup 1 = if                      \ dst is direct
     drop                          \ drop dstspec ( src dst srcspec )
     dup 1 = if  %11 ModR/M.mod!  then  \ src is direct
@@ -110,11 +110,11 @@ VARIABLE <opcode2>
   then
   dup 3 = if                            \ dst is indirect
     drop                                \ drop dstspec
-    3 = if  abort" two indirect operands"  then
+    3 = abort" two indirect operands"
     >ModR/M.rm  >ModR/M.reg  assemble/1
     exit
   then
-  abort" wat"
+  true abort" wat"
 ; immediate
 
 : sub,  ( type src type dst -- )
@@ -124,10 +124,10 @@ VARIABLE <opcode2>
   \ rearrange parameters             ( srcspec src dstspec dst )
   2swap swap -rot swap 2swap swap    ( src dst srcspec dstspec )
   \ validate operands
-  dup 0= if  abort" destination cannot be immediate"  then
-  dup 2 = if  abort" cannot encode dst address yet"  then
-  over 0= if  abort" source cannot be immediate yet"  then
-  over 2 = if  abort" cannot encode src address yet"  then
+  dup 0= abort" destination cannot be immediate"
+  dup 2 = abort" cannot encode dst address yet"
+  over 0= abort" source cannot be immediate yet"
+  over 2 = abort" cannot encode src address yet"
   dup 1 = if                      \ dst is direct
     drop                          \ drop dstspec ( src dst srcspec )
     dup 1 = if  %11 ModR/M.mod!  then  \ src is direct
@@ -137,11 +137,11 @@ VARIABLE <opcode2>
   then
   dup 3 = if                            \ dst is indirect
     drop                                \ drop dstspec
-    3 = if  abort" two indirect operands"  then
+    3 = abort" two indirect operands"
     >ModR/M.rm  >ModR/M.reg  assemble/1
     exit
   then
-  abort" wat"
+  true abort" wat"
 ; immediate
 
 : mov,  ( type src type dst -- )
@@ -151,8 +151,8 @@ VARIABLE <opcode2>
   \ rearrange parameters             ( srcspec src dstspec dst )
   2swap swap -rot swap 2swap swap    ( src dst srcspec dstspec )
   \ validate operands
-  dup 0= if  abort" destination cannot be immediate"  then
-  over 0= if  abort" source cannot be immediate yet"  then
+  dup 0= abort" destination cannot be immediate"
+  over 0= abort" source cannot be immediate yet"
   dup 1 = if                        \ dst is direct
     drop                            \ drop dstspec ( src dst srcspec )
     dup 2 = if                      \ src is memory
@@ -175,8 +175,8 @@ VARIABLE <opcode2>
   then
   dup 2 = if                        \ dst is address
     drop                            \ drop dstspec ( src dst srcspec )
-    dup 2 = if  abort" two operands are memory"  then
-    dup 3 = if  abort" can't encode indirect source and memory"  then
+    dup 2 = abort" two operands are memory"
+    dup 3 = abort" can't encode indirect source and memory"
     dup 1 = if
       drop
       swap                             \ src is indirect, swap src/dst
@@ -189,13 +189,13 @@ VARIABLE <opcode2>
   then
   dup 3 = if                            \ dst is indirect
     drop                                \ drop dstspec
-    dup 2 = if  abort" can't encode indirect destination and memory"  then
-    dup 3 = if  abort" two indirect operands"  then
+    dup 2 = abort" can't encode indirect destination and memory"
+    dup 3 = abort" two indirect operands"
     drop
     >ModR/M.rm  >ModR/M.reg  assemble/1
     exit
   then
-  abort" wat"
+  true abort" wat"
 ; immediate
 
 \ - populate assembler variables based on operands and operand specs
@@ -221,8 +221,8 @@ VARIABLE <opcode2>
   \ rearrange parameters             ( srcspec src dstspec dst )
   2swap swap -rot swap 2swap swap    ( src dst srcspec dstspec )
   \ validate operands
-  dup 0= if  abort" destination cannot be immediate"  then
-  over 0= if  abort" source cannot be immediate yet"  then
+  dup 0= abort" destination cannot be immediate"
+  over 0= abort" source cannot be immediate yet"
   dup 1 = if                        \ dst is direct
     drop                            \ drop dstspec ( src dst srcspec )
     dup 1 = if
@@ -239,32 +239,32 @@ VARIABLE <opcode2>
       drop swap  >ModR/M.rm  >ModR/M.reg
       FALSE TRUE exit
     then
-    abort" direct dst, invalid src type"
+    true abort" direct dst, invalid src type"
   then
   dup 2 = if                        \ dst is address
     drop                            \ drop dstspec ( src dst srcspec )
-    dup 2 = if  abort" two operands are memory"  then
-    dup 3 = if  abort" can't encode indirect source and memory"  then
+    dup 2 = abort" two operands are memory"
+    dup 3 = abort" can't encode indirect source and memory"
     dup 1 = if
       drop
       swap                             \ src is indirect, swap src/dst
       4 >ModR/M.rm  >ModR/M.reg
       TRUE FALSE exit
     then
-    abort" memory dst, invalid src type"
+    true abort" memory dst, invalid src type"
   then
   dup 3 = if                            \ dst is indirect
     drop                                \ drop dstspec
-    dup 2 = if  abort" can't encode indirect destination and memory"  then
-    dup 3 = if  abort" two indirect operands"  then
+    dup 2 = abort" can't encode indirect destination and memory"
+    dup 3 = abort" two indirect operands"
     dup 1 = if
       drop
       >ModR/M.rm  >ModR/M.reg
       FALSE FALSE exit
     then
-    abort" indirect dst, invalid src type"
+    true abort" indirect dst, invalid src type"
   then
-  abort" wat"
+  true abort" wat"
 ;
 
 : newmov, ( spec src spec dst -- )

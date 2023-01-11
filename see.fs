@@ -36,7 +36,7 @@
     (see-call) TRUE EXIT
   THEN
   DUP C@ $C2 = IF
-    1+ COUNT SWAP COUNT ROT + IF  ABORT" unexpected $C2 operand"  THEN
+    1+ COUNT SWAP COUNT ROT + ABORT" unexpected $C2 operand"
     S" EXIT" TYPE TRUE EXIT
   THEN
   DUP C@ $C3 = IF  S" ;" TYPE 1+ FALSE EXIT THEN
