@@ -197,7 +197,7 @@ CREATE <STRINGBUFFER> 256 ALLOT
   <STRINGBUFFER> COUNT
 ;
 
-: (S")  ( R: addr -- R: addr> )  R>  COUNT  2DUP +  >R  ;
+: (S")  ( R: addr -- addr u | R: addr> )  R>  COUNT  2DUP +  >R  ;
 
 : S"  ( "string" -- addr n )
   STATE @ 0= IF  <S">  EXIT THEN
