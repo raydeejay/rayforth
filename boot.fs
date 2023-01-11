@@ -51,7 +51,7 @@
 ; IMMEDIATE
 
 : BEGIN   HERE ; IMMEDIATE
-: UNTIL   ( ['] 0= COMPILE, ) ['] (0branch) COMPILE, , ; IMMEDIATE
+: UNTIL   ['] (0branch) COMPILE, , ; IMMEDIATE
 : AGAIN   ['] (branch) COMPILE, , ; IMMEDIATE
 : WHILE   ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
 : REPEAT  SWAP ['] (branch) COMPILE, ,  HERE SWAP ! ; IMMEDIATE
