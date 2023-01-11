@@ -205,12 +205,20 @@ CREATE <STRINGBUFFER> 256 ALLOT
   COUNT + DP !
 ; IMMEDIATE
 
-: (abort")  S" ¯\_(ツ)_/¯ <{ " TYPE TYPE S"  }" TYPE ABORT ;
+: ."  ( "name" -- )
+  POSTPONE S"
+  ['] TYPE COMPILE,
+; IMMEDIATE
+
+: (abort")  ( u -- )
+  IF  S" ¯\_(ツ)_/¯ <{ " TYPE TYPE S"  }" TYPE ABORT  THEN
+  2DROP
+;
 
 : ABORT"  ( "msg" -- )
   ['] (S") COMPILE,  [CHAR] " WORD
   COUNT + DP !
-  \ ['] S" LITERAL ['] COMPILE, COMPILE,
+  ['] ROT COMPILE,
   ['] (abort") COMPILE,
 ; IMMEDIATE
 
@@ -299,9 +307,38 @@ s" see.fs" INCLUDED
 ;
 
 : forget ( "name" -- )
-  bl word find 0= if abort" word not found" then
+  bl word find 0=  abort" word not found"
   xt>name 1 cells -  dup dp !  @ latest !
 ;
+
+: VALUE CREATE , DOES> @ ;
+: TO  ( "name" u -- )
+  BL WORD FIND 0= ABORT" value not found"
+  \ maybe should test if it's a value
+  \ on the other hand, read what you write...?
+  5 + !                         \ skip code, store in data
+;
+
+: <TO>  ( "string" u -- )
+  BL WORD FIND 0= ABORT" value not found"
+  \ maybe should test if it's a value
+  \ on the other hand, read what you write...?
+  5 + !                         \ skip code, store in data
+;
+
+: (TO)  ( R: addr -- R: addr> )
+  R> DUP CELL+ >R  @ !
+;
+
+: TO  ( "name" u -- )
+  STATE @ 0= IF  <TO>  EXIT THEN
+  ['] (TO) COMPILE,
+  BL WORD FIND 0= ABORT" value not found"
+  5 + ,
+; IMMEDIATE
+
+
+
 
 : HELLO
   S" boot.fs loaded" TYPE CR
