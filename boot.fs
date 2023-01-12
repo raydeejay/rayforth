@@ -325,8 +325,10 @@ s" see.fs" INCLUDED
   5 + ,
 ; IMMEDIATE
 
-
-
+: DEFER  ( "name" -- )
+  CREATE 0 ,                    \ maybe a default deferred instead?
+  DOES> @ EXECUTE
+;
 
 : HELLO
   S" boot.fs loaded" TYPE CR
