@@ -1,8 +1,5 @@
 #! /home/raydj/forth/rayforth/rayforth-launcher
 
-( this is a test flag )
-\ 1234567890
-
 : EXIT $C2 C, 0 C, 0 C, ; IMMEDIATE
 
 : HEX       16 BASE ! ;
@@ -65,9 +62,6 @@
   UNTIL
   DROP
 ;
-
-( print the test flag )
-\ . CR
 
 : LITERAL  ( x -- ) ['] LIT COMPILE, , ; IMMEDIATE
 
