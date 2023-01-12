@@ -306,12 +306,6 @@ s" see.fs" INCLUDED
 ;
 
 : VALUE CREATE , DOES> @ ;
-: TO  ( "name" u -- )
-  BL WORD FIND 0= ABORT" value not found"
-  \ maybe should test if it's a value
-  \ on the other hand, read what you write...?
-  5 + !                         \ skip code, store in data
-;
 
 : <TO>  ( "string" u -- )
   BL WORD FIND 0= ABORT" value not found"
