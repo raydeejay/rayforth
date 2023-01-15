@@ -204,6 +204,10 @@ CREATE <STRINGBUFFER> 256 ALLOT
   ['] TYPE COMPILE,
 ; IMMEDIATE
 
+: .(  ( "name" -- )
+  ') WORD COUNT TYPE
+;
+
 : (abort")  ( u -- )
   IF  S" ¯\_(ツ)_/¯ <{ " TYPE TYPE S"  }" TYPE CR ABORT  THEN
   2DROP
