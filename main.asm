@@ -1268,6 +1268,10 @@ find_return_non_immediate:
         cmp r10, '%'
         je tonumber_binary
 
+        ; is it '? ascii
+        cmp r10, "'"
+        je tonumber_ascii
+
         ; the number is in the current base
         jmp tonumber_begin
 
@@ -1295,7 +1299,18 @@ tonumber_binary:
         dec X
         jmp tonumber_begin
 
-        ; and for the last three...
+tonumber_ascii:
+        inc W
+        dec X
+        mov r10b, [W]
+        mov rdx, 1
+        DPUSH r10
+        call plus
+        inc W
+        dec X
+        jmp tonumber_done
+
+        ; and for the first three prefixes...
         ; is it -? negative
 
 tonumber_begin:
