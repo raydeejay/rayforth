@@ -205,7 +205,7 @@ CREATE <STRINGBUFFER> 256 ALLOT
 ; IMMEDIATE
 
 : (abort")  ( u -- )
-  IF  S" ¯\_(ツ)_/¯ <{ " TYPE TYPE S"  }" TYPE ABORT  THEN
+  IF  S" ¯\_(ツ)_/¯ <{ " TYPE TYPE S"  }" TYPE CR ABORT  THEN
   2DROP
 ;
 
