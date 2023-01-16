@@ -464,11 +464,12 @@ DICTIONARY:
 ;; RAX ← Quotient, RDX ← Remainder.
 ;; ( ud u1 -- u2 u3 )
 .colon "UM/MOD", umdividemod
-        mov rdx, [PSP+CELLSIZE] ; which will be 0, but whatever...
-        mov rax, NOS
+        mov rax, [PSP+CELLSIZE]
+        mov rdx, NOS            ; which will be 0, but whatever...
         div TOS
-        mov NOS, rax
-        mov TOS, rdx
+        add PSP, CELLSIZE       ; remove the high part of the double
+        mov TOS, rax
+        mov NOS, rdx
         ret
 
 .colon "/", divide
