@@ -82,14 +82,15 @@ CREATE <pno> 256 ALLOT
 VARIABLE #<pno>
 
 \ these should respect BASE, rewrite (the CHAR 0 + part)
+\ just... ignoring doubles
 : <# ( -- )  <pno> 256 ERASE  255 #<pno> ! ;
-: #  ( ud1 -- ud2 )
-  BASE @ UM/MOD  [CHAR] 0 +  <pno> #<pno> @ +  C!
-  -1 #<pno> +!  S>D
+: #  ( u1 -- u2 )
+  0  BASE @ UM/MOD  SWAP [CHAR] 0 +  <pno> #<pno> @ +  C!
+  -1 #<pno> +!
 ;
-: #S ( ud1 -- 0 0 )  BEGIN  # DUP  WHILE REPEAT  ;
-: #> ( xd -- c-addr u )  2DROP <pno> 256 + #<pno> @ - #<pno> @ ;
-
+: #S ( u1 -- 0 )  BEGIN  # DUP  WHILE REPEAT ;
+: #> ( u -- c-addr u )  DROP  <pno> #<pno> @ +  256 #<pno> @ - ;
+: HOLD  ( c -- )  <pno> #<pno> @ +  C!  -1 #<pno> +! ;
 
 : U.R  ( rlen u -- )
   TUCK  BEGIN  -1 UNDER+ BASE @ / DUP  WHILE REPEAT  DROP SPACES ..
