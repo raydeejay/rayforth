@@ -164,15 +164,15 @@ CHAR 8 ATTR: <INVISIBLE>
   2DROP 2DROP 0 FALSE FALSE
 ;
 
-: FILE-POSITION  ( fid -- ud ior )
-  1 0 ROT 8 SYSCALL/3 S>D DUP (ior)
+: FILE-POSITION  ( fid -- u ior )
+  1 0 ROT 8 SYSCALL/3 DUP (ior)
 ;
 
-: FILE-SIZE  ( fid -- ud ior )
+: FILE-SIZE  ( fid -- u ior )
   DUP DUP FILE-POSITION DROP
   ROT 2 0 ROT 8 SYSCALL/3 >R
   ROT 8 SYSCALL/3 DROP
-  DROP R> S>D DUP (ior)
+  DROP R> DUP (ior)
 ;
 
 : REPOSITION-FILE  ( ud fid -- ior )
