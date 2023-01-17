@@ -9,8 +9,6 @@
 : CELL+  ( addr -- addr' ) 8 + ;
 : CELLS  ( n -- n*cellsize ) 8 * ;
 
-: S>D    ( u -- ud )   0 SWAP ;
-
 : >NAME  8 + ;
 : >CODE  8 + COUNT + ;
 
