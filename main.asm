@@ -689,6 +689,13 @@ DICTIONARY:
         DUP
         ret
 
+.colon "?DUP", maybedup         ; ( a -- a / a a )
+        test TOS, TOS
+        jz maybedup_end
+        DUP
+maybedup_end:
+        ret
+
 .colon "2DUP", _2dup               ; ( a b -- a b a b )
         mov r8, NOS
         sub PSP, CELLSIZE*2
