@@ -317,13 +317,29 @@ s" see.fs" INCLUDED
   5 + !                         \ skip code, store in data
 ;
 
-: (TO)  ( R: addr -- R: addr> )
+: (TO)  ( u | R: addr -- R: addr> )
   R> DUP CELL+ >R  @ !
 ;
 
 : TO  ( "name" u -- )
   STATE @ 0= IF  <TO>  EXIT THEN
   ['] (TO) COMPILE,
+  BL WORD FIND 0= ABORT" value not found"
+  5 + ,
+; IMMEDIATE
+
+: <+TO>  ( "string" u -- )
+  BL WORD FIND 0= ABORT" value not found"
+  5 +  DUP @ UNDER+ !           \ skip code, store in data
+;
+
+: (+TO)  ( u | R: addr -- R: addr> )
+  R> DUP CELL+ >R  @  DUP @ UNDER+  !
+;
+
+: +TO  ( "name" u -- )
+  STATE @ 0= IF  <+TO>  EXIT THEN
+  ['] (+TO) COMPILE,
   BL WORD FIND 0= ABORT" value not found"
   5 + ,
 ; IMMEDIATE
