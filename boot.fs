@@ -17,15 +17,6 @@
 : IF    ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
 : THEN  HERE SWAP ! ; IMMEDIATE
 
-: FOR   ['] (for) COMPILE, HERE ; IMMEDIATE
-: NEXT
-  ['] (next) COMPILE,
-  ['] I COMPILE,
-  ['] 0= COMPILE,
-  ['] (0branch) COMPILE, ,
-  ['] (endfor) COMPILE,
-; IMMEDIATE
-
 : DODOES   R> R> SWAP >R ;
 : (DOES>)  R>  LATEST @ >CODE COMPILE@ ;
 : DOES>    ['] (DOES>) COMPILE, ['] DODOES COMPILE, ; IMMEDIATE
