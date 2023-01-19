@@ -1,5 +1,9 @@
 #! /home/raydj/forth/rayforth/rayforth-launcher
 
+CREATE builtins---->
+
+: INCLUDE  ( "filename" -- )  BL WORD COUNT INCLUDED ;
+
 : EXIT $C2 C, 0 C, 0 C, ; IMMEDIATE
 
 : HEX       16 BASE ! ;
