@@ -188,7 +188,8 @@ WORDBUFFER:
 
 %define link 0
 %define IMM 0x80
-%define SMUDGE 0x40
+%define LOCAL 0x40
+%define SMUDGE 0x20
 
 %macro head 3
 %{2}_entry:
@@ -1136,7 +1137,7 @@ find_check_lengths:
         ; store the immediate flag and the count separately
         mov dl, cl
         and dl, IMM
-        xor cl, dl
+        and cl, 0x3F
         cmp bl, cl
         je find_check_names
 
@@ -1879,7 +1880,7 @@ postpone_end:
 .colon "REVEAL", reveal, IMM
         mov r8, [val_latest]
         add r8, CELLSIZE
-        and byte [r8], 0xBF      ; clear SMUDGE bit
+        and byte [r8], 0xFF-SMUDGE      ; clear SMUDGE bit
         ret
 
 .colon ":", colon

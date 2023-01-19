@@ -46,11 +46,13 @@ CREATE builtins---->
 : WHILE   ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
 : REPEAT  SWAP ['] (branch) COMPILE, ,  HERE SWAP ! ; IMMEDIATE
 
+INCLUDE localwords.fs
+
 : WORDS
   LATEST @
   BEGIN
     DUP >NAME
-    COUNT  $7F AND  TYPE BL EMIT
+    COUNT  $1F AND  TYPE BL EMIT
     @ DUP 0=
   UNTIL
   DROP
@@ -73,8 +75,10 @@ CREATE builtins---->
 : SPACES  ( n -- )  DUP 0 > IF  0 DO  BL EMIT  LOOP  EXIT THEN  DROP ;
 : ZEROS   ( n -- )  DUP 0 > IF  0 DO  [CHAR] 0 EMIT  LOOP  EXIT THEN  DROP ;
 
-CREATE <pno> 256 ALLOT
-VARIABLE #<pno>
+local.start
+
+CREATE <pno> 256 ALLOT LOCAL
+VARIABLE #<pno> LOCAL
 
 \ these should respect BASE, rewrite (the CHAR 0 + part)
 \ just... ignoring doubles
@@ -86,6 +90,8 @@ VARIABLE #<pno>
 : #S ( u1 -- 0 )  BEGIN  # DUP  WHILE REPEAT ;
 : #> ( u -- c-addr u )  DROP  <pno> #<pno> @ +  256 #<pno> @ - ;
 : HOLD  ( c -- )  <pno> #<pno> @ +  C!  -1 #<pno> +! ;
+
+local.end
 
 : U.R  ( rlen u -- )
   TUCK  BEGIN  -1 UNDER+ BASE @ / DUP  WHILE REPEAT  DROP SPACES ..
