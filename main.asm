@@ -2229,7 +2229,10 @@ filenamestr:
 ;; ( addr n -- )
 .colon "INCLUDED", included
         ; save input specification directly to rstack
-        push qword 4
+        push qword 4            ; shouldn't this be the top value...?
+                                ; it's never used anyway...
+                                ; the regular mechanism uses
+                                ; the data stack
         push qword [val_sourceid]
         push qword [val_TOIN]
         push qword [val_sourcelen]
@@ -2239,8 +2242,17 @@ filenamestr:
         DPUSH val_rofam
         call openfile
 
-        ; ignore errors for now, what could possibly go wrong :-D
-        DPOP r8
+        ; give notice if it doesn't exist
+        DPOP r8                 ; (-x if error)
+        test r8, r8
+        jns included_file_exists
+
+        DPUSH notFoundMsgStr
+        DPUSH notFoundMsgLen
+        call type
+        jmp included_restore_input
+
+included_file_exists:
         ; store the source-id
         DPOP r8
         mov [val_sourceid], r8
@@ -2281,6 +2293,7 @@ included_done:
         call closefile
         DPOP r8                 ; and yet some more
 
+included_restore_input:
         ; restore input specification
         pop qword [val_sourceaddr]
         pop qword [val_sourcelen]
