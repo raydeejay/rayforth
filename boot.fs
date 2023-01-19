@@ -28,6 +28,8 @@ CREATE builtins---->
 : CONSTANT CREATE , DOES> @ ;
 : VARIABLE CREATE 0 , ;
 
+: WITHIN ( u/n lo hi -- f ) OVER - >R - R> U< ;
+
 : DO   ['] (do) COMPILE, HERE ; IMMEDIATE
 : LOOP
   ['] (loop) COMPILE,
