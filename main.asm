@@ -878,8 +878,8 @@ readline_error:
         DPUSH -1                ; and ior
         ret
 
-.variable "<sourceaddr>", sourceaddr, TIBDATA
-.variable "<sourcelen>", sourcelen, BUFFERSIZE
+.variable "<sourceaddr>", sourceaddr, TIBDATA, LOCAL
+.variable "<sourcelen>", sourcelen, BUFFERSIZE, LOCAL
 .variable "SOURCE-ID", sourceid, 0
 .variable "BLK", blk, 0
 
@@ -1904,20 +1904,6 @@ postpone_end:
         ;; call word_              ; which will be on WORDBUFFER as a c-string
         call word_              ; which will be on HERE as a counted string
 
-        ;; get the length and increment dp
-        ;; then flags+count followed by the name
-        ;; call dup
-        ;; call cfetch
-        ;; DPUSH 1
-        ;; call plus
-        ;; DPOP rcx                ; we will copy count+1 bytes
-        ;; DPOP rsi
-        ;; DPUSH rcx               ; let's keep the size on the stack
-        ;; call dp
-        ;; call fetch
-        ;; DPOP rdi
-        ;; rep movsb
-
         ; update here (we left the count on the stack)
         call dup
         call cfetch
@@ -1958,7 +1944,7 @@ created:
         ret
 
 
-.colon "(0branch)", zerobranch
+.colon "(0branch)", zerobranch, LOCAL
         pop r9
         DPOP r8
         test r8, r8
@@ -1970,12 +1956,12 @@ zerobranch_backward:
         push qword [r9]
         ret
 
-.colon "(branch)", branch
+.colon "(branch)", branch, LOCAL
         pop r9
         push qword [r9]
         ret
 
-.colon "(for)", innerfor
+.colon "(for)", innerfor, LOCAL
         ; slide the loop counter on the stack to second on return stack
         DPOP r8
         pop r9
@@ -1988,14 +1974,14 @@ zerobranch_backward:
         dec qword [rsp+8]
         ret
 
-.colon "(endfor)", endfor
+.colon "(endfor)", endfor, LOCAL
         ; remove the loop counter from second on return stack
         pop r8
         pop r9
         push r8
         ret
 
-.colon "(do)", innerdo
+.colon "(do)", innerdo, LOCAL
         ;; put index and limit on the return stack
         DPOP r8
         DPOP r9
@@ -2005,7 +1991,7 @@ zerobranch_backward:
         push r10
         ret
 
-.colon "(loop)", innerloop
+.colon "(loop)", innerloop, LOCAL
         ; inject a false result by default
         DUP
         CLR TOS
@@ -2048,7 +2034,7 @@ innerplusloopdone:
         mov X, [rsp+CELLSIZE*2]
         ret
 
-.colon "(enddo)", enddo
+.colon "(enddo)", enddo, LOCAL
         ; remove the loop data from return stack
         pop r8
         pop r9
@@ -2067,7 +2053,7 @@ innerplusloopdone:
         DPUSH r8
         ret
 
-.colon "(limit)", dolimit
+.colon "(limit)", dolimit, LOCAL
         mov r8, [rsp+CELLSIZE*2]
         DPUSH r8
         ret
