@@ -191,14 +191,6 @@ WORDBUFFER:
 %define LOCAL 0x40
 %define SMUDGE 0x20
 
-; %macro head 3
-; %{2}_entry:
-;         %%link dq link
-; %define link %%link
-; %strlen %%count %1
-;         db %3 + %%count,%1
-; %endmacro
-
 %macro head 3
 %{2}_entry:
         %%link dq link
