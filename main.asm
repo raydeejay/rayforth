@@ -174,7 +174,7 @@ WORDBUFFER:
 
 ;; dictionary here?
 ;; colon and code definitions have the same structure
-;; LINK   FLAGS|COUNT   NAME   code here...
+;; LINK (8)  FLAGS (1)   COUNT (1)   NAME (cnt)   code follows...
 
 ;; Here we create some macros for easy creation of dictionary entries,
 ;; along with labels than can be used later to call code or address
@@ -191,12 +191,21 @@ WORDBUFFER:
 %define LOCAL 0x40
 %define SMUDGE 0x20
 
+; %macro head 3
+; %{2}_entry:
+;         %%link dq link
+; %define link %%link
+; %strlen %%count %1
+;         db %3 + %%count,%1
+; %endmacro
+
 %macro head 3
 %{2}_entry:
         %%link dq link
 %define link %%link
+        db %3
 %strlen %%count %1
-        db %3 + %%count,%1
+        db %%count,%1
 %endmacro
 
 %macro .colon 2-3 0
@@ -1125,8 +1134,19 @@ find_setup:
         mov rsi, r10
         mov rdi, Y
 
-        ; first move over the link, to the count+name
+        ; first move over the link, to the flags
         add rdi, CELLSIZE
+
+        ; if it's smudged, skip
+        test byte [rdi], SMUDGE
+        jnz find_next_link
+
+        ; else store the immediate bit
+        mov dl, byte [rdi]
+        and dl, IMM
+
+        ; then move over the flags
+        add rdi, 1
 
         ; compare the string lengths
 find_check_lengths:
@@ -1134,10 +1154,6 @@ find_check_lengths:
         xor rcx, rcx
         mov bl, [rsi]
         mov cl, [rdi]
-        ; store the immediate flag and the count separately
-        mov dl, cl
-        and dl, IMM
-        and cl, 0x3F
         cmp bl, cl
         je find_check_names
 
@@ -1771,7 +1787,7 @@ quit_prompt_end:
         ; find last entry
         call latest
         call fetch
-        ; get to the length
+        ; get to the flags
         DPUSH CELLSIZE
         call plus
         call dup
@@ -1902,6 +1918,16 @@ postpone_end:
         call plus
         call dp
         call store
+
+        ; compile a flags byte
+        DPUSH 0
+        call dp
+        call fetch
+        call cstore
+        ; increment dictionary pointer
+        DPUSH 1
+        call dp
+        call cplusstore
 
         call bl_                ; get the word name
         ;; call word_              ; which will be on WORDBUFFER as a c-string
@@ -2330,6 +2356,16 @@ included_restore_input:
         call plus
         call dp
         call store
+
+        ; compile a flags byte
+        DPUSH 0
+        call dp
+        call fetch
+        call cstore
+        ; increment dictionary pointer
+        DPUSH 1
+        call dp
+        call cplusstore
 
         call bl_                ; get the word name
         call word_              ; which will be on WORDBUFFER as a c-string

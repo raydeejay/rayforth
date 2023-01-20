@@ -13,8 +13,9 @@ CREATE builtins---->
 : CELL+  ( addr -- addr' ) 8 + ;
 : CELLS  ( n -- n*cellsize ) 8 * ;
 
-: >NAME  8 + ;
-: >CODE  8 + COUNT + ;
+: >FLAGS  CELL+ ;
+: >NAME   >FLAGS 1+ ;
+: >CODE   >NAME COUNT + ;
 
 : RECURSE ['] (branch) COMPILE, LATEST @ >CODE , ; IMMEDIATE
 
@@ -284,13 +285,14 @@ CREATE <STRINGBUFFER> 256 ALLOT
 ;
 
 
+\ the following logic is prone to false positives
+\ may need a new header structure? :-/
 : XT>NAME  ( addr -- addr' )
   DUP >R BEGIN                          \ addr' | addr0
-    DUP C@ $7F AND 1+                   \ addr' len?+1 | addr0
-    OVER + R@ <>                        \ addr' notfound? | addr0
-  WHILE
-      1-                                \ addr'-1 | addr0
-  REPEAT
+    1-                                  \ addr'-1 | addr0
+    DUP C@ 1+                           \ addr'-1 len?+1 | addr0
+    OVER + R@ =                         \ addr'-1 found? | addr0
+  UNTIL
   R> DROP                               \ addr'
 ;
 

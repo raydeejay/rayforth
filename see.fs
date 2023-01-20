@@ -1,5 +1,5 @@
 : (see-call)  ( addr xt -- addr' )
-  XT>NAME COUNT TYPE SPACE              \ display name
+  XT>NAME COUNT TYPE SPACE      \ display name
   4 +                                   \ next adddress
 ;
 

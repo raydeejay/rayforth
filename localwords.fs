@@ -4,8 +4,8 @@
 
 $40 constant LOCALBIT
 
-: LOCAL        ( -- )  latest @ cell+  DUP c@ LOCALBIT or SWAP c! ;
-: local?       ( addr -- f )      cell+ c@ LOCALBIT and ;
+: LOCAL        ( -- )  latest @ >FLAGS  DUP c@ LOCALBIT or SWAP c! ;
+: local?       ( addr -- f )  >FLAGS  c@ LOCALBIT and ;
 
 ( local.start ) here
 
