@@ -1,23 +1,34 @@
+local.start
+
+: (fetch32) ( addr -- u32 )
+  0 SWAP
+  32 0 DO
+    COUNT I LSHIFT UNDER+
+  8 +LOOP
+  DROP
+  DUP $80000000 AND IF  $FFFFFFFF00000000 OR  THEN \ sign extend
+; LOCAL
+
 : (see-call)  ( addr xt -- addr' )
   XT>NAME COUNT TYPE SPACE      \ display name
   4 +                                   \ next adddress
-;
+; LOCAL
 
 : (see-lit)  ( addr -- addr' )
   16 OVER @ HEX U0.R DECIMAL            \ display callee address
   8 +                                   \ next adddress
-;
+; LOCAL
 
 : (see-string)  ( addr -- addr' )
   DUP COUNT
   [CHAR] " EMIT TYPE [CHAR] " EMIT      \ display string
   COUNT +                               \ next adddress
-;
+; LOCAL
 
 : (see-absolute)  ( addr -- addr' )
   5 - 8 - DUP @ (see-call)              \ display name
   4 + 5 +                               \ next address
-;
+; LOCAL
 
 : (see)  ( addr -- addr' f )
   16 OVER HEX U0.R DECIMAL SPACE        \ display address
@@ -41,7 +52,7 @@
   THEN
   DUP C@ $C3 = IF  S" ;" TYPE 1+ FALSE EXIT THEN
   FALSE
-;
+; LOCAL
 
 : SEE ( "name" -- )
   BL WORD FIND 0= IF DROP EXIT THEN
@@ -51,3 +62,5 @@
   \ 256 dump
   BEGIN (see) CR WHILE REPEAT DROP
 ;
+
+local.end

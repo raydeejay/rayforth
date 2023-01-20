@@ -49,6 +49,20 @@ CREATE builtins---->
 : WHILE   ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
 : REPEAT  SWAP ['] (branch) COMPILE, ,  HERE SWAP ! ; IMMEDIATE
 
+\ the following logic is prone to false positives, but only if the
+\ word name exceeds 32 characters, at which point you have a naming
+\ problem, which is way worse
+: XT>NAME  ( addr -- addr' )
+  DUP >R BEGIN                          \ addr' | addr0
+    1-                                  \ addr'-1 | addr0
+    DUP C@ 1+                           \ addr'-1 len?+1 | addr0
+    OVER + R@ =                         \ addr'-1 found? | addr0
+  UNTIL
+  R> DROP                               \ addr'
+;
+
+: XT>LINK  ( addr -- addr' )  XT>NAME -1 CELLS + 1- ;
+
 INCLUDE localwords.fs
 
 : WORDS
@@ -78,8 +92,6 @@ INCLUDE localwords.fs
 : SPACES  ( n -- )  DUP 0 > IF  0 DO  BL EMIT  LOOP  EXIT THEN  DROP ;
 : ZEROS   ( n -- )  DUP 0 > IF  0 DO  [CHAR] 0 EMIT  LOOP  EXIT THEN  DROP ;
 
-local.start
-
 CREATE <pno> 256 ALLOT LOCAL
 VARIABLE #<pno> LOCAL
 
@@ -93,8 +105,6 @@ VARIABLE #<pno> LOCAL
 : #S ( u1 -- 0 )  BEGIN  # DUP  WHILE REPEAT ;
 : #> ( u -- c-addr u )  DROP  <pno> #<pno> @ +  256 #<pno> @ - ;
 : HOLD  ( c -- )  <pno> #<pno> @ +  C!  -1 #<pno> +! ;
-
-local.end
 
 : U.R  ( rlen u -- )
   TUCK  BEGIN  -1 UNDER+ BASE @ / DUP  WHILE REPEAT  DROP SPACES ..
@@ -130,7 +140,7 @@ CHAR 8 ATTR: <INVISIBLE>
 : FG  ( n -- )  <ESC> <CSI> 3 .. .. [CHAR] m EMIT ;
 : BG  ( n -- )  <ESC> <CSI> 4 .. .. [CHAR] m EMIT ;
 
-: (ior)  ( n -- ior ) 0 < ;
+: (ior)  ( n -- ior ) 0 < ; LOCAL
 
 : READ-FILE  ( c-addr u1 fid -- u2 ior )
   ROT SWAP 0 SYSCALL/3 DUP (ior)
@@ -214,7 +224,7 @@ CREATE <STRINGBUFFER> 256 ALLOT
 : (abort")  ( u -- )
   IF  S" ¯\_(ツ)_/¯ <{ " TYPE TYPE S"  }" TYPE CR ABORT  THEN
   2DROP
-;
+; LOCAL
 
 : ABORT"  ( "msg" -- )
   ['] (S") COMPILE,  [CHAR] " WORD
@@ -222,7 +232,6 @@ CREATE <STRINGBUFFER> 256 ALLOT
   ['] ROT COMPILE,
   ['] (abort") COMPILE,
 ; IMMEDIATE
-
 
 \ format is:
 \ TIBDATA len  >IN @  0    4  for stdin
@@ -240,63 +249,43 @@ CREATE <STRINGBUFFER> 256 ALLOT
   TRUE
 ;
 
-: FORTH-INCLUDED ( addr n -- )
-  \ save current input specification ( addr size >in source-id n )
-  SAVE-INPUT >R >R >R >R >R
-  \ open the file
-  R/O OPEN-FILE ( ior ) DROP
-  \ store the fid in source-id
-  SOURCE-ID !
-  \ make the file the input source (??)
-  1024 DUP <sourcelen> !
-  ALLOCATE ( ior ) DROP <sourceaddr> !
+\ : FORTH-INCLUDED ( addr n -- )
+\   \ save current input specification ( addr size >in source-id n )
+\   SAVE-INPUT >R >R >R >R >R
+\   \ open the file
+\   R/O OPEN-FILE ( ior ) DROP
+\   \ store the fid in source-id
+\   SOURCE-ID !
+\   \ make the file the input source (??)
+\   1024 DUP <sourcelen> !
+\   ALLOCATE ( ior ) DROP <sourceaddr> !
 
-  \ store 0 in BLK
-  0 BLK !
+\   \ store 0 in BLK
+\   0 BLK !
 
-  \ repeat until eof
-  \   read line into input buffer, set >in to 0,  interpret
-  BEGIN
-    REFILL
-  WHILE
-      0 >IN !  INTERPRET
-  REPEAT
+\   \ repeat until eof
+\   \   read line into input buffer, set >in to 0,  interpret
+\   BEGIN
+\     REFILL
+\   WHILE
+\       0 >IN !  INTERPRET
+\   REPEAT
 
-  \ free buffer
-  SOURCE DROP FREE ( ior ) DROP
-  \ close file
-  \ restore input specification
-  R> R> R> R> R> RESTORE-INPUT ( flag ) DROP
-;
+\   \ free buffer
+\   SOURCE DROP FREE ( ior ) DROP
+\   \ close file
+\   \ restore input specification
+\   R> R> R> R> R> RESTORE-INPUT ( flag ) DROP
+\ ;
 
 : (dump)  ( addr -- )
   HEX
   8 OVER U0.R  SPACE DUP 16 + SWAP DO 2 I C@ U0.R SPACE LOOP
-  DECIMAL CR ;
+  DECIMAL CR
+; LOCAL
 : DUMP    ( addr n -- )  OVER + SWAP  DO  I (dump)  16 +LOOP ;
 
-: (fetch32) ( addr -- u32 )
-  0 SWAP
-  32 0 DO
-    COUNT I LSHIFT UNDER+
-  8 +LOOP
-  DROP
-  DUP $80000000 AND IF  $FFFFFFFF00000000 OR  THEN \ sign extend
-;
-
-
-\ the following logic is prone to false positives
-\ may need a new header structure? :-/
-: XT>NAME  ( addr -- addr' )
-  DUP >R BEGIN                          \ addr' | addr0
-    1-                                  \ addr'-1 | addr0
-    DUP C@ 1+                           \ addr'-1 len?+1 | addr0
-    OVER + R@ =                         \ addr'-1 found? | addr0
-  UNTIL
-  R> DROP                               \ addr'
-;
-
-s" see.fs" INCLUDED
+INCLUDE see.fs
 
 : args   ( -- args-addr )  rp0@ 3 cells + ;
 : nargs  ( -- n )  rp0@ 2 cells + @ ;
@@ -320,11 +309,11 @@ s" see.fs" INCLUDED
   \ maybe should test if it's a value
   \ on the other hand, read what you write...?
   5 + !                         \ skip code, store in data
-;
+; LOCAL
 
 : (TO)  ( u | R: addr -- R: addr> )
   R> DUP CELL+ >R  @ !
-;
+; LOCAL
 
 : TO  ( "name" u -- )
   STATE @ 0= IF  <TO>  EXIT THEN
@@ -336,11 +325,11 @@ s" see.fs" INCLUDED
 : <+TO>  ( "string" u -- )
   BL WORD FIND 0= ABORT" value not found"
   5 +  DUP @ UNDER+ !           \ skip code, store in data
-;
+; LOCAL
 
 : (+TO)  ( u | R: addr -- R: addr> )
   R> DUP CELL+ >R  @  DUP @ UNDER+  !
-;
+; LOCAL
 
 : +TO  ( "name" u -- )
   STATE @ 0= IF  <+TO>  EXIT THEN
@@ -353,6 +342,10 @@ s" see.fs" INCLUDED
   CREATE 0 ,                    \ maybe a default deferred instead?
   DOES> @ EXECUTE
 ;
+
+\ Process all local words defined in assembly. The very first word
+\ defined is TRUE, so we take that address as the start of local area.
+' TRUE XT>LINK local.end
 
 : HELLO
   S" boot.fs loaded" TYPE CR
