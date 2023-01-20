@@ -69,7 +69,7 @@ INCLUDE localwords.fs
   LATEST @
   BEGIN
     DUP >NAME
-    COUNT  $1F AND  TYPE BL EMIT
+    COUNT  TYPE BL EMIT
     @ DUP 0=
   UNTIL
   DROP
