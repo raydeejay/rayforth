@@ -61,7 +61,7 @@ CREATE builtins---->
   R> DROP                               \ addr'
 ;
 
-: XT>LINK  ( addr -- addr' )  XT>NAME -1 CELLS + 1- ;
+: XT>LINK  ( addr -- addr' )  XT>NAME 1 CELLS - 1- ;
 
 INCLUDE localwords.fs
 
