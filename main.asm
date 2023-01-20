@@ -120,10 +120,6 @@ align 8
         DATASTACK resb CELLSIZE*STACKSIZE
         DATASTACKBOTTOM equ $
 
-;; Temporary stack
-        TEMPSTACK resb CELLSIZE*STACKSIZE
-        TEMPSTACKBOTTOM equ $
-
 ;; Return Stack
         RETURNSTACKBOTTOM resb 8
 
@@ -303,25 +299,6 @@ DICTIONARY:
         pop r9
         push r8
         push r9
-        ret
-
-.variable "TSTACKTOP", tempstacktop, TEMPSTACKBOTTOM
-
-.colon "T@", tfetch
-        mov r8, [val_tempstacktop]
-        DPUSH [r8]
-        ret
-
-.colon "T>", fromtstack
-        mov r8, [val_tempstacktop]
-        DPUSH [r8]
-        add qword [val_tempstacktop], CELLSIZE
-        ret
-
-.colon ">T", totstack
-        sub qword [val_tempstacktop], CELLSIZE
-        mov r8, [val_tempstacktop]
-        DPOP [r8]
         ret
 
 .colon "0=", zeroEqual
