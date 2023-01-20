@@ -205,8 +205,9 @@ WORDBUFFER:
 %{2}:
 %endmacro
 
-%macro .constant 3
-        head %1,%2,0
+; %macro .constant 3
+%macro .constant 3-4 0
+        head %1,%2,%4
 %{2}:
         mov W, val_ %+ %2
         mov X, [W]
@@ -215,8 +216,9 @@ WORDBUFFER:
         val_ %+ %2 dq %3        ; value stored here
 %endmacro
 
-%macro .variable 3
-        head %1,%2,0
+; %macro .variable 3
+%macro .variable 3-4 0
+        head %1,%2,%4
 %{2}:
         DPUSH val_ %+ %2
         ret
