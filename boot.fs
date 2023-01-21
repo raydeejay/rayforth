@@ -95,17 +95,17 @@ INCLUDE localwords.fs
 
 CREATE <pno> 256 ALLOT LOCAL
 VARIABLE #<pno> LOCAL
+VARIABLE sign? LOCAL
 
-\ these should respect BASE, rewrite (the CHAR 0 + part)
-\ just... ignoring doubles
-: <# ( -- )  <pno> 256 ERASE  255 #<pno> ! ;
+: <# ( u/n -- u )  <pno> 256 ERASE  255 #<pno> !  dup 0 < sign? ! abs ;
 : #  ( u1 -- u2 )
-  0  BASE @ UM/MOD  SWAP [CHAR] 0 +  <pno> #<pno> @ +  C!
+  0  BASE @ UM/MOD  SWAP BASEDIGITS + c@  <pno> #<pno> @ +  C!
   -1 #<pno> +!
 ;
 : #S ( u1 -- 0 )  BEGIN  # DUP  WHILE REPEAT ;
 : #> ( u -- c-addr u )  DROP  <pno> #<pno> @ +  256 #<pno> @ - ;
 : HOLD  ( c -- )  <pno> #<pno> @ +  C!  -1 #<pno> +! ;
+: SIGN  ( u -- u )  sign? @ 0 < IF  '- HOLD  THEN ;
 
 : U.R  ( rlen u -- )
   TUCK  BEGIN  -1 UNDER+ BASE @ / DUP  WHILE REPEAT  DROP SPACES ..
