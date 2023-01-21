@@ -20,6 +20,7 @@ CREATE builtins---->
 : RECURSE ['] (branch) COMPILE, LATEST @ >CODE , ; IMMEDIATE
 
 : IF    ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
+: ELSE  ['] (branch)  COMPILE, HERE 0 ,  HERE ROT ! ; IMMEDIATE
 : THEN  HERE SWAP ! ; IMMEDIATE
 
 : DODOES   R> R> SWAP >R ;
