@@ -90,7 +90,7 @@ INCLUDE localwords.fs
 : UNDER+  ( a b c -- a+c b )  ROT + SWAP ;
 : SPACE   ( -- )  BL EMIT ;
 : SPACES  ( n -- )  DUP 0 > IF  0 DO  BL EMIT  LOOP  EXIT THEN  DROP ;
-: ZEROS   ( n -- )  DUP 0 > IF  0 DO  [CHAR] 0 EMIT  LOOP  EXIT THEN  DROP ;
+: ZEROS   ( n -- )  DUP 0 > IF  0 DO  '0 EMIT  LOOP  EXIT THEN  DROP ;
 
 CREATE <pno> 256 ALLOT LOCAL
 VARIABLE #<pno> LOCAL
