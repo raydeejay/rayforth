@@ -212,14 +212,8 @@ CREATE <STRINGBUFFER> 256 ALLOT
   COUNT + DP !
 ; IMMEDIATE
 
-: ."  ( "name" -- )
-  POSTPONE S"
-  ['] TYPE COMPILE,
-; IMMEDIATE
-
-: .(  ( "name" -- )
-  ') WORD COUNT TYPE
-;
+: ."  ( "name" -- )  POSTPONE S"  ['] TYPE COMPILE, ; IMMEDIATE
+: .(  ( "name" -- )  ') WORD COUNT TYPE ;
 
 : (abort")  ( u -- )
   IF  S" ¯\_(ツ)_/¯ <{ " TYPE TYPE S"  }" TYPE CR ABORT  THEN
