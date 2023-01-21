@@ -195,7 +195,8 @@ CHAR 8 ATTR: <INVISIBLE>
 ;
 
 \ only one buffer for now
-CREATE <STRINGBUFFER> 256 ALLOT
+local.start
+CREATE <STRINGBUFFER> 256 ALLOT LOCAL
 
 : <S">  ( "string" -- addr n )
   [CHAR] " WORD
@@ -203,6 +204,7 @@ CREATE <STRINGBUFFER> 256 ALLOT
   SWAP <STRINGBUFFER> 1 + SWAP CMOVE
   <STRINGBUFFER> COUNT
 ;
+local.end
 
 : (S")  ( R: addr -- addr u | R: addr> )  R>  COUNT  2DUP +  >R  ;
 
