@@ -25,9 +25,6 @@ bits 64
 ;; should make a decision on whether to have dual sets of words
 ;; (DUP/DUP,) for interpretation/regular compiling vs inlining
 
-;; how to implement J when having both FOR/NEXT and DO/LOOP? if at all...
-
-
 ;; once file access is implemented, determine what should be a
 ;; primitive and what should be a high level definition, then move the
 ;; high level code to boot.fs
