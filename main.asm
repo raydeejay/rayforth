@@ -88,7 +88,7 @@ bits 64
         CELLSIZE equ 8
         STACKSIZE equ 64
         BUFFERSIZE equ 4096
-        DIGITS db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        BASEDIGITS db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         TRUE equ -1
         FALSE equ 0
         MMAP_FLAGS equ 0x22 ; MMAP_ANONYMOUS|MMAP_PRIVATE
@@ -224,6 +224,8 @@ DICTIONARY:
 ;; primitives
 .constant "TRUE", true, -1
 .constant "FALSE", false, 0
+
+.constant "BASEDIGITS", digits, BASEDIGITS
 
 .colon "@", fetch
         mov TOS, [TOS]
@@ -1563,7 +1565,7 @@ period_process_digit:
         CLR rdx
         mov rbx, [val_base]
         div rbx
-        add rdx, DIGITS            ; make a letter
+        add rdx, BASEDIGITS            ; make a letter
         mov rdx, [rdx]
         DPUSH byte rdx
         inc W
@@ -1616,7 +1618,7 @@ period_process_digit2:
         CLR rdx
         mov rbx, [val_base]
         div rbx
-        add rdx, DIGITS            ; make a letter
+        add rdx, BASEDIGITS            ; make a letter
         mov rdx, [rdx]
         DPUSH byte rdx
         inc W
