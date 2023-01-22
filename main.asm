@@ -109,6 +109,10 @@ align 8
         bootfsStr db "boot.fs"
         bootfsLen equ $-bootfsStr
 
+timeval:
+        tv_sec  dq 0
+        tv_usec dq 0
+
 ;; here's where these things go, apparently
 SECTION .bss
 align 8
@@ -572,6 +576,23 @@ DICTIONARY:
 ;; Only values of class INTEGER or class MEMORY are passed to the
 ;; kernel.
 
+
+.colon "MS", ms
+        xor rdx, rdx
+        mov rax, TOS
+        mov rbx, 1000
+        idiv rbx
+        mov qword [tv_sec], rax
+        mov rax, rdx
+        mul rbx
+        mul rbx
+        mov qword [tv_usec], rax
+        mov rdi, timeval
+        mov rsi, 0
+        mov rax, 0x23
+        syscall
+        DROP
+        ret
 
 .colon "SYSCALL/1", colonsyscall1 ; ( arg1 int -- result )
         DPOP rax
