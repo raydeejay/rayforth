@@ -2224,10 +2224,11 @@ filenamestr:
         call fill
 
         DPUSH filenamestr
-        call swap               ; ( fam a-addr fstr u )
-        call cmove              ; ( fam )  ; mode
+        call swap               ; ( fam c-addr fstr u )
+        call cmove              ; ( fam )  ; flags
 
-        DPUSH 0                 ; flags
+        DPUSH 0                 ; permissions, apparently
+        call swap
         DPUSH filenamestr       ; C-filename pointer
         DPUSH 2
         call colonsyscall3
