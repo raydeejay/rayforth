@@ -2401,7 +2401,7 @@ included_restore_input:
 end_of_builtins:
 ;; should I add a blob of uninitialised (or initialised) space here?
 
-        resb 65536
+        resb 65536*4
 end_of_dictionary:
 
 ;; the program code here
