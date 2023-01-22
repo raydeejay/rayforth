@@ -436,8 +436,8 @@ DICTIONARY:
         xor rdx, rdx
         mov rax, NOS
         idiv TOS
-        mov NOS, rax
-        mov TOS, rdx
+        mov TOS, rax
+        mov NOS, rdx
         ret
 
 ;; Unsigned divide RDX:RAX by r/m64, with result stored in
