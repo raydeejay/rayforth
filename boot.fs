@@ -190,9 +190,8 @@ CHAR 8 ATTR: <INVISIBLE>
   DROP R> DUP (ior)
 ;
 
-: REPOSITION-FILE  ( ud fid -- ior )
-  ( use the sure-to-be 0 as SEEK_SET )
-  8 SYSCALL/3 (ior)
+: REPOSITION-FILE  ( u fid -- ior )
+  0 ( <-SEEK_SET ) -rot  8 SYSCALL/3 (ior)
 ;
 
 \ only one buffer for now
