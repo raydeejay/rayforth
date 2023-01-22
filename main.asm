@@ -2256,7 +2256,7 @@ filenamestr:
         push qword [val_sourceaddr]
 
         ; open the file read only
-        DPUSH val_rofam
+        DPUSH 0
         call openfile
 
         ; give notice if it doesn't exist
