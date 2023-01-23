@@ -378,12 +378,11 @@ variable <updated> LOCAL
 : LOAD    ( i*x u -- j*x )
   dup 0= if  true abort" Cannot LOAD block 0"  then
   >R save-input R>
-  dup  block  <sourceaddr> !
+  dup  block  <sourceaddr> !  blk !
   1024 <sourcelen> !
   0 >in !
-  blk !
   interpret
-  restore-input drop
+  restore-input  0 blk !  0= abort" restore-input failed"
 ;
 
 : THRU    ( i * x u1 u2 -- j * x ) 1+ swap DO  I load  LOOP ;
