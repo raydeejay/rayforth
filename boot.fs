@@ -289,8 +289,126 @@ INCLUDE see.fs
   DOES> @ EXECUTE
 ;
 
-\ Process all local words defined in assembly. The very first word
-\ defined is TRUE, so we take that address as the start of local area.
+\ BLOCKS code
+variable BLK
+variable SCR
+variable cbuf LOCAL
+
+variable <blockfd> LOCAL
+
+: USE  ( "name" -- )
+  <blockfd> @ ?dup if  close-file abort" error closing blocks file" then
+  0 <blockfd> !
+  BL WORD COUNT r/w open-file abort" error opening blocks file"
+  <blockfd> !
+;
+
+\ block -1 is not valid in a mapping, it means "no block"  (yes?)
+create <mapping>  LOCAL 64 CELLS allot
+create <buffers>  LOCAL 64 1024 * allot
+<mapping> 64 cells -1 fill
+
+\ bitvector to keep track of updated buffers
+variable <updated> LOCAL
+: BIT      ( u -- mask )  1 swap lshift ;
+: CLEAR  ( mask addr -- )  tuck @ xor swap ! ;
+: SET    ( mask addr -- )  tuck @ or  swap ! ;
+: TEST   ( mask addr -- f )  tuck @ and 0<> ;
+
+: buf>map  ( baddr -- maddr )  <buffers> - 128 / <mapping> + ; LOCAL
+: map>buf  ( baddr -- maddr )  <mapping> - 128 * <buffers> + ; LOCAL
+: map>bit  ( maddr -- ubit )   <mapping> - 8 / BIT ; LOCAL
+: map>blk  ( maddr -- blk# )   @ ; LOCAL
+: range    ( -- limit base )  <mapping> dup 64 cells under+ ; LOCAL
+: updated? ( maddr -- f )  map>bit <updated> @ AND 0<> ; LOCAL
+
+: read     ( u baddr -- )
+  2dup . . ." read" cr
+  swap 1024 * <blockfd> @ reposition-file abort" error seeking blocks file"
+  1024 <blockfd> @ READ-FILE ABORT" error reading blocks file"
+  drop
+; LOCAL
+
+: write    ( maddr -- )
+  dup map>buf . dup map>blk . ." written" cr
+  dup  map>blk 1024 * <blockfd> @ reposition-file abort" error seeking blocks file"
+  map>buf 1024 <blockfd> @ write-file abort" error writing blocks file"
+  drop
+; LOCAL
+
+: mapping  ( u -- maddr/false )
+  range DO
+    DUP I @ = IF  drop I UNLOOP EXIT  THEN
+  1 CELLS +LOOP
+  drop FALSE
+; LOCAL
+
+: map    ( u maddr -- )  ! ; LOCAL
+
+: unmap  ( maddr -- )
+  dup updated? IF  dup write  THEN
+  dup map>bit <updated> clear
+  -1 swap !
+; LOCAL
+
+: BLOCK   ( u -- baddr )
+  DUP mapping  ?DUP IF  nip map>buf  dup cbuf ! exit  then
+  -1 mapping  ?DUP IF  2dup map  map>buf  tuck read  dup cbuf ! exit then
+  \ unmap... but which block? always the first one?
+  \ use some LRU strategy where mapping positions swap on access?
+  <mapping>  dup unmap  2dup map  map>buf  tuck read  dup cbuf !
+;
+
+: BUFFER  ( u -- addr )
+  DUP mapping  ?DUP IF  nip map>buf  dup cbuf ! exit  then
+  -1 mapping  ?DUP IF  tuck map  map>buf  dup cbuf ! exit  then
+  <mapping>  dup unmap  tuck map  map>buf  dup cbuf !
+;
+
+: EMPTY-BUFFERS  ( -- )  <mapping> 64 CELLS erase ;
+
+: SAVE-BUFFERS   ( -- )
+  range do  I updated? if  I write  then  1 cells +loop  0 <updated> !
+;
+
+: FLUSH   ( -- ) save-buffers <mapping> 64 cells erase ;
+
+\ can be factored better, maybe... not right now :-)
+\ block 0 cannot be LOADed, because BLK would be set to 0,
+\ which makes the terminal the input source,
+\ however it can be BLOCKed, LISTed, etc
+: LOAD    ( i*x u -- j*x )
+  dup 0= if  true abort" Cannot LOAD block 0"  then
+  >R save-input R>
+  dup  block  <sourceaddr> !
+  1024 <sourcelen> !
+  0 >in !
+  dup blk !
+  interpret
+  . ." loaded"
+  restore-input drop
+;
+
+: THRU    ( i * x u1 u2 -- j * x ) swap . load ;
+
+: UPDATE  ( -- )
+  cbuf @ buf>map map>bit <updated> @ OR <updated> !
+;
+
+: LIST    ( u -- )
+  dup SCR !
+  block 16 0 DO  I 64 * OVER + 64 type cr  loop
+  drop
+;
+
+\ extend backslash, REFILL, and EVALUATE (which we don't have yet)
+
+\ almost ready to boot
+
+\ Process all local words defined either in assembly or boot.fs. The
+\ very first word defined is TRUE, so we take that address as the
+\ start of local area.
+
 ' TRUE XT>LINK local.end
 
 : HELLO
