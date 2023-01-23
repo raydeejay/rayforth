@@ -154,31 +154,8 @@ CHAR 8 ATTR: <INVISIBLE>
 ;
 
 : WRITE-LINE  ( c-addr u1 fid -- u2 ior )
-  ROT SWAP 1 SYSCALL/3 DUP (ior)
-  BL  1 SYSCALL/3 DUP (ior)
-;
-
-\ fix to make fully compliant...?
-
-: FORTH-READ-LINE  ( c-addr u1 fileid -- u2 flag ior )
-  ROT SWAP 0 -ROT            ( u1 0 c-addr fileid )
-  BEGIN
-    2DUP 1 SWAP              ( u1 0 c-addr fileid c-addr 1 fileid )
-    READ-FILE ( u1 0 c-addr fileid u2 ior )
-    IF  >R 2DROP 2DROP R> DUP TRUE EXIT  THEN DROP
-    ( u1 0 c-addr fileid u2 )
-  WHILE  ( u1 0 c-addr fileid )                          \ if no chars read, exit
-      OVER C@ 10 =  IF  2DROP NIP TRUE FALSE EXIT  THEN  \ if newline exit
-      1 UNDER+ 2SWAP 1+ ( c-addr+1 fileid u1 0+1 )
-      2DUP =  IF  DROP -ROT 2DROP TRUE FALSE EXIT  THEN   \ if max chars exit
-      2SWAP             ( u1 0+1 c-addr+1 fileid )
-
-      SWAP COUNT 10 =  IF  2DROP NIP TRUE FALSE EXIT  THEN  \ if newline exit
-      SWAP 2SWAP 1+     ( c-addr+1 fileid u1 0+1 )
-      2DUP =  IF  DROP -ROT 2DROP TRUE FALSE EXIT  THEN   \ if max chars exit
-      2SWAP             ( u1 0+1 c-addr+1 fileid )
-  REPEAT
-  2DROP 2DROP 0 FALSE FALSE
+  dup >R  ROT SWAP 1 SYSCALL/3 DUP (ior)
+  10 1 PSP 1 cells + R> 1 SYSCALL/3 DUP (ior)
 ;
 
 : FILE-POSITION  ( fid -- u ior )
@@ -246,35 +223,6 @@ local.end
   SOURCE-ID ! >IN ! <sourcelen> ! <sourceaddr> !
   TRUE
 ;
-
-\ : FORTH-INCLUDED ( addr n -- )
-\   \ save current input specification ( addr size >in source-id n )
-\   SAVE-INPUT >R >R >R >R >R
-\   \ open the file
-\   R/O OPEN-FILE ( ior ) DROP
-\   \ store the fid in source-id
-\   SOURCE-ID !
-\   \ make the file the input source (??)
-\   1024 DUP <sourcelen> !
-\   ALLOCATE ( ior ) DROP <sourceaddr> !
-
-\   \ store 0 in BLK
-\   0 BLK !
-
-\   \ repeat until eof
-\   \   read line into input buffer, set >in to 0,  interpret
-\   BEGIN
-\     REFILL
-\   WHILE
-\       0 >IN !  INTERPRET
-\   REPEAT
-
-\   \ free buffer
-\   SOURCE DROP FREE ( ior ) DROP
-\   \ close file
-\   \ restore input specification
-\   R> R> R> R> R> RESTORE-INPUT ( flag ) DROP
-\ ;
 
 : (dump)  ( addr -- )
   HEX
