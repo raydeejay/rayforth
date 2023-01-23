@@ -88,15 +88,18 @@ bits 64
         CELLSIZE equ 8
         STACKSIZE equ 64
         BUFFERSIZE equ 4096
-        BASEDIGITS db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         TRUE equ -1
         FALSE equ 0
-        MMAP_FLAGS equ 0x22 ; MMAP_ANONYMOUS|MMAP_PRIVATE
+        MMAP_FLAGS equ 0x22 ; MAP_ANONYMOUS|MAP_PRIVATE
         MMAP_PROTECTION equ 0x7 ; RWE
+        BLOCK_MMAP_FLAGS equ 0x22 ; MAP_SHARED|MAP_SYNC
+        BLOCK_MMAP_PROTECTION equ 0x3 ; RW?
 
 ;; static data stuff
 SECTION .data
-align 8
+; align 4
+        BASEDIGITS db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
         helloStr db "RayForth v0", 10
         helloLen equ $-helloStr
 
@@ -115,7 +118,7 @@ timeval:
 
 ;; here's where these things go, apparently
 SECTION .bss
-align 8
+; align 4
 
 ;; Parameter stack
         DATASTACK resb CELLSIZE*STACKSIZE
@@ -223,7 +226,9 @@ WORDBUFFER:
 %endmacro
 
 
-SECTION mysection,EWR
+SECTION .mysection exec
+align 4
+
 DICTIONARY:
 ;; primitives
 .constant "TRUE", true, -1
@@ -834,7 +839,7 @@ maybedup_end:
         ret
 
 .colon '\', backslash, IMM
-;;; '  ; work around nasm-mode highlighting
+;;; '   ; work around nasm-mode highlighting
         DPUSH 10
         call word_
         call drop
@@ -2407,7 +2412,7 @@ end_of_dictionary:
 
 ;; the program code here
 SECTION .text
-align CELLSIZE
+;align 4
 
 global _start
 
