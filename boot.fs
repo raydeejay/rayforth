@@ -398,13 +398,25 @@ variable <updated> LOCAL
 ;
 
 \ extend backslash, REFILL, and EVALUATE (which we don't have yet)
+: \  ( "some text" -- )
+  BLK @ IF
+    >in @   6 rshift 6 lshift   64 + >in ! exit
+  THEN
+  postpone \
+; IMMEDIATE
+
+\ use stty -icanon -echo before starting
+\ use stty icanon echo after exiting
+\ echoing will be disabled, but so will be buffering
+\ not disabling echo causes double characters and oddness
+\ anyway we need a way to see what's being typed
+\ key will still be blocking but not buffered anymore
 
 \ almost ready to boot
 
 \ Process all local words defined either in assembly or boot.fs. The
 \ very first word defined is TRUE, so we take that address as the
 \ start of local area.
-
 ' TRUE XT>LINK local.end
 
 : HELLO
