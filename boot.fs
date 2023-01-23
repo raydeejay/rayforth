@@ -43,6 +43,8 @@ CREATE builtins---->
   ['] (0branch) COMPILE, ,
   ['] (enddo) COMPILE,
 ; IMMEDIATE
+: UNLOOP  ['] (enddo) COMPILE, ; IMMEDIATE
+: LEAVE   ( not sure how to go about this right now...) ;
 
 : BEGIN   HERE ; IMMEDIATE
 : UNTIL   ['] (0branch) COMPILE, , ; IMMEDIATE
