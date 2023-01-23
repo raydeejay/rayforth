@@ -386,7 +386,7 @@ variable <updated> LOCAL
   restore-input drop
 ;
 
-: THRU    ( i * x u1 u2 -- j * x ) swap . load ;
+: THRU    ( i * x u1 u2 -- j * x ) 1+ swap DO  I load  LOOP ;
 
 : UPDATE  ( -- )
   cbuf @ buf>map map>bit <updated> @ OR <updated> !
