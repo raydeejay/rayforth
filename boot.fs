@@ -323,14 +323,12 @@ variable <updated> LOCAL
 : updated? ( maddr -- f )  map>bit <updated> @ AND 0<> ; LOCAL
 
 : read     ( u baddr -- )
-  2dup . . ." read" cr
   swap 1024 * <blockfd> @ reposition-file abort" error seeking blocks file"
   1024 <blockfd> @ READ-FILE ABORT" error reading blocks file"
   drop
 ; LOCAL
 
 : write    ( maddr -- )
-  dup map>buf . dup map>blk . ." written" cr
   dup  map>blk 1024 * <blockfd> @ reposition-file abort" error seeking blocks file"
   map>buf 1024 <blockfd> @ write-file abort" error writing blocks file"
   drop
@@ -383,9 +381,8 @@ variable <updated> LOCAL
   dup  block  <sourceaddr> !
   1024 <sourcelen> !
   0 >in !
-  dup blk !
+  blk !
   interpret
-  . ." loaded"
   restore-input drop
 ;
 
