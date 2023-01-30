@@ -218,6 +218,10 @@ local.end
   ['] (abort") COMPILE,
 ; IMMEDIATE
 
+\ reads the newline too... :-/
+: ACCEPT  ( c-addr +n1 -- +n2 )  0 read-file abort" ACCEPT error" 1- ;
+
+
 \ format is:
 \ TIBDATA len  >IN @  0    4  for stdin
 \ addr len     >IN @  fid  4  for files
