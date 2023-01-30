@@ -303,7 +303,7 @@ INCLUDE see.fs
   DOES> @ EXECUTE
 ;
 
-\ BLOCKS code
+\ BLOCKS code --------------------------------------------------
 variable BLK
 variable SCR
 variable cbuf LOCAL
@@ -418,13 +418,26 @@ variable <updated> LOCAL
   THEN
   postpone \
 ; IMMEDIATE
+\ BLOCKS code end ----------------------------------------------
 
-\ use stty -icanon -echo before starting
-\ use stty icanon echo after exiting
-\ echoing will be disabled, but so will be buffering
-\ not disabling echo causes double characters and oddness
-\ anyway we need a way to see what's being typed
-\ key will still be blocking but not buffered anymore
+include string.fs
+
+CREATE needle 32 allot LOCAL
+CREATE haystack 32 allot LOCAL
+
+: WORDS.LIKE  ( "name" -- )
+  BL WORD COUNT  needle c!  needle COUNT CMOVE
+  needle COUNT upcase!
+
+  LATEST @ BEGIN  ( linkaddr )
+    DUP >NAME COUNT  haystack c!  haystack COUNT CMOVE
+    haystack COUNT upcase!
+    haystack COUNT needle COUNT SEARCH -ROT 2DROP
+    IF  DUP >NAME COUNT type space  THEN
+    @ DUP 0=
+  UNTIL
+;
+
 
 \ almost ready to boot
 
