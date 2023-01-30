@@ -2235,6 +2235,34 @@ resize_end:
 cmove_end:
         ret
 
+align 4                         ; but why.... :-/
+.colon "CMOVE>", cmovefw        ; ( addr1 addr2 u -- )
+        DPOP rcx
+        DPOP rdi
+        add rdi, rcx
+        dec rdi
+        DPOP rsi
+        add rsi, rcx
+        dec rsi
+        test rcx, rcx
+        jz cmovefw_end
+        std
+        rep movsb
+        cld
+cmovefw_end:
+        ret
+
+;; this is supposed to NOT propagate when addresses overlap
+.colon "MOVE", move           ; ( addr1 addr2 u -- )
+        DPOP rcx
+        DPOP rdi
+        DPOP rsi
+        test rcx, rcx
+        jz move_end
+        rep movsq
+move_end:
+        ret
+
 .colon "FILL", fill             ; ( addr u c -- )
         DPOP rax
         DPOP rcx
