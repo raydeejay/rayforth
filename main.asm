@@ -633,6 +633,12 @@ DICTIONARY:
         DROP
         ret
 
+.colon "SYSCALL/0", colonsyscall ; ( int -- result )
+        DPOP rax
+        syscall
+        DPUSH rax
+        ret
+
 .colon "SYSCALL/1", colonsyscall1 ; ( arg1 int -- result )
         DPOP rax
         DPOP rdi
