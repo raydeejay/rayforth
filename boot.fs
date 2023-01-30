@@ -30,6 +30,16 @@ CREATE builtins---->
 : CONSTANT CREATE , DOES> @ ;
 : VARIABLE CREATE 0 , ;
 
+\ for some reason alignment seems to matter... this should help
+: aligned  ( u-addr -- a-addr )  4 rshift 4 lshift 16 + ;
+: align    ( -- )  here aligned dp ! ;
+
+: 2@  ( addr -- u1 u2 )  dup cell+ @ swap @ ;
+: 2!  ( u1 u2 addr -- )  tuck ! cell+ ! ;
+
+: 2CONSTANT CREATE , , DOES> 2@ ;
+: 2VARIABLE CREATE 0 , 0 , ;
+
 : WITHIN ( u/n lo hi -- f ) OVER - >R - R> U< ;
 
 : DO   ['] (do) COMPILE, HERE ; IMMEDIATE
