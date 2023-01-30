@@ -309,6 +309,24 @@ DICTIONARY:
         push r9
         ret
 
+.colon "2R>", twofromrstack
+        pop r10
+        pop r8
+        pop r9
+        push r10
+        DPUSH r9
+        DPUSH r8
+        ret
+
+.colon "2>R", twotorstack
+        DPOP r8
+        DPOP r9
+        pop r10
+        push r9
+        push r8
+        push r10
+        ret
+
 .colon "0=", zeroEqual
         mov r8, TOS
         CLR TOS
