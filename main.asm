@@ -343,6 +343,22 @@ DICTIONARY:
         cmovnz TOS, W
         ret
 
+.colon "0<", zeroLess
+        mov r8, TOS
+        CLR TOS
+        mov W, -1
+        cmp r8, 0
+        cmovl TOS, W
+        ret
+
+.colon "0>", zeroMore
+        mov r8, TOS
+        CLR TOS
+        mov W, -1
+        cmp r8, 0
+        cmovg TOS, W
+        ret
+
 .colon "=", equal
         mov r8, TOS
         CLR TOS
