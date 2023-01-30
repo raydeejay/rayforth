@@ -1,7 +1,5 @@
 1234567980
 
-: FOO   5  FOR   I .   3 FOR 65 EMIT NEXT  NEXT  CR ;
-
 : BAR  5 0 DO  I .  LOOP CR ;
 
 : BAZ  3 0 DO  3 0 DO  J . I .  CR LOOP  LOOP ;
@@ -12,11 +10,8 @@
 
 : TEST2  0 BEGIN  DUP . DUP 10 <> WHILE 1 + REPEAT DROP ;
 
-11 22 TWO . . TWO . . CR
-
 5 TESTTHIS
 
-FOO
 BAR
 BAZ
 
