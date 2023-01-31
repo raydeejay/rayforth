@@ -60,6 +60,7 @@ CREATE builtins---->
 : UNTIL   ['] (0branch) COMPILE, , ; IMMEDIATE
 : AGAIN   ['] (branch) COMPILE, , ; IMMEDIATE
 : WHILE   ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
+: ?WHILE  ['] ?DUP COMPILE, ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
 : REPEAT  SWAP ['] (branch) COMPILE, ,  HERE SWAP ! ; IMMEDIATE
 
 \ the following logic is prone to false positives, but only if the
