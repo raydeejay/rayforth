@@ -441,6 +441,74 @@ CREATE haystack 32 allot LOCAL
   UNTIL
 ;
 
+\ fork and exec things
+: fork  ( -- f )  $39 syscall/0 ;
+
+CREATE <args>  LOCAL here 1024 dup allot erase
+CREATE <args*> LOCAL here 16 cells dup allot erase
+VARIABLE <argc> LOCAL
+0 CONSTANT NULLENV LOCAL
+
+: add-arg  ( c-addr u addr -- addr' )
+  dup  <args*> <argc> @ cells +  ! \ set up the pointer in args*
+  2dup 2>R                         \ save address and count
+  swap cmove                       \ copy to <args>
+  2R> +                            \ restore and move past
+  0 over c! 1+                     \ store 0 and move past
+  0 over c!                        \ store another 0, end of array
+  1 <argc> +!                      \ increment arg count
+; LOCAL
+
+: exec  ( c-addrn un ... c-addr1 u1 argc c-addr u -- n )
+  0 <argc> !  <args*> 16 cells erase
+  <args> add-arg                   \ first arg is the pathname
+  swap ?dup if
+    0 do  add-arg  loop            \ copy args
+  then  drop
+  NULLENV <args*> <args>  $3B syscall/3
+;
+
+: (system)  ( c-addrn un ... c-addr1 u1 argc c-addr u -- )
+  fork dup 0 < abort" error forking" if
+    ( wait for child )
+    2drop exit
+  then
+  exec ." error executing" bye     \ execute in forked process
+;
+
+: system  ( c-addrn un ... c-addr1 u1 argc "pathname" -- )
+  BL WORD COUNT (system)
+;
+
+\ --- thoughts on non-buffered KEY and such -------------
+\ use stty -icanon -echo before starting
+\ use stty icanon echo after exiting
+\ echoing will be disabled, but so will be buffering
+\ not disabling echo causes double characters and oddness
+\ anyway we need a way to see what's being typed
+\ key will still be blocking but not buffered anymore
+\ -------------------------------------------------------
+
+: buffered    ( -- )
+  s" icanon" s" echo" 2 s" /bin/stty" (system) drop 2drop 2drop
+;
+
+: unbuffered  ( -- )
+  s" -icanon" s" -echo" 2 s" /bin/stty" (system) drop 2drop 2drop
+;
+
+\ key?
+CREATE pollfd
+0 c, 0 c, 0 c, 0 c,             \ fd
+1 c, 0 c,                       \ events
+0 c, 0 c,                       \ revents
+
+: poll  ( timeout nfds fds* -- u )
+  $07 syscall/3  dup -1 = abort" poll error"
+;
+
+: key?  ( -- f )  0 1 pollfd poll ;
+
 
 \ almost ready to boot
 
