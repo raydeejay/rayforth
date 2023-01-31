@@ -128,7 +128,9 @@ VARIABLE sign? LOCAL
   TUCK  BEGIN  -1 UNDER+ BASE @ / DUP  WHILE REPEAT  DROP ZEROS ..
 ;
 
-: AT  ( x y -- )  <ESC> <CSI> .. [CHAR] ; EMIT .. [CHAR] H EMIT    ;
+: AT  ( x y -- )
+  <ESC> <CSI> 1+ .. [CHAR] ; EMIT 1+ .. [CHAR] H EMIT
+;
 
 : ATTR:  ( "name" n -- )
   CREATE , DOES> <ESC> <CSI> @ EMIT [CHAR] m EMIT
