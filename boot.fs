@@ -113,7 +113,7 @@ CREATE <pno> 256 ALLOT LOCAL
 VARIABLE #<pno> LOCAL
 VARIABLE sign? LOCAL
 
-: <# ( u/n -- u )  <pno> 256 ERASE  255 #<pno> !  dup 0 < sign? ! abs ;
+: <# ( u/n -- u )  <pno> 256 ERASE  256 #<pno> !  dup 0 < sign? ! abs ;
 : #  ( u1 -- u2 )
   0  BASE @ UM/MOD  SWAP BASEDIGITS + c@  <pno> #<pno> @ +  C!
   -1 #<pno> +!
