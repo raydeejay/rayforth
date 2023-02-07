@@ -115,8 +115,8 @@ VARIABLE sign? LOCAL
 
 : <# ( u/n -- u )  <pno> 256 ERASE  256 #<pno> !  dup 0 < sign? ! abs ;
 : #  ( u1 -- u2 )
-  0  BASE @ UM/MOD  SWAP BASEDIGITS + c@  <pno> #<pno> @ +  C!
   -1 #<pno> +!
+  0  BASE @ UM/MOD  SWAP BASEDIGITS + c@  <pno> #<pno> @ +  C!
 ;
 : #S ( u1 -- 0 )  BEGIN  # DUP  WHILE REPEAT ;
 : #> ( u -- c-addr u )  DROP  <pno> #<pno> @ +  256 #<pno> @ - ;
