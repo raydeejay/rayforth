@@ -19,13 +19,16 @@ CREATE builtins---->
 
 : RECURSE ['] (branch) COMPILE, LATEST @ >CODE , ; IMMEDIATE
 
-: IF    ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
-: ELSE  ['] (branch)  COMPILE, HERE 0 ,  HERE ROT ! ; IMMEDIATE
-: THEN  HERE SWAP ! ; IMMEDIATE
-
 : DODOES   R> R> SWAP >R ;
 : (DOES>)  R>  LATEST @ >CODE COMPILE@ ;
 : DOES>    ['] (DOES>) COMPILE, ['] DODOES COMPILE, ; IMMEDIATE
+
+0 ,                             ( sigh... )
+
+: IF    ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
+: ELSE  ['] (branch)  COMPILE, HERE 0 ,  HERE ROT ! ; IMMEDIATE
+: THEN  HERE SWAP ! ; IMMEDIATE
+: ?IF   ['] ?DUP COMPILE, ['] (0branch) COMPILE, HERE 0 , ; IMMEDIATE
 
 : CONSTANT CREATE , DOES> @ ;
 : VARIABLE CREATE 0 , ;
