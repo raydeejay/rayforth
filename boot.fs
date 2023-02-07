@@ -513,6 +513,19 @@ CREATE pollfd
 : key?  ( -- f )  0 1 pollfd poll ;
 
 
+\ PRNG stuff  ( https://prng.di.unimi.it/ )
+2variable xoshiro128+state  $DEADBEEF xoshiro128+state !
+
+: rotl  ( x k -- u )  2dup lshift  -rot  64 swap - rshift  or ;
+
+: xoshiro128+  ( -- u )
+  xoshiro128+state 2@  2dup + -rot \ result
+  xor
+  xoshiro128+state @ 24 rotl  over xor  over 16 lshift xor
+  swap 37 rotl  swap xoshiro128+state 2!
+;
+
+
 \ almost ready to boot
 
 \ Process all local words defined either in assembly or boot.fs. The
